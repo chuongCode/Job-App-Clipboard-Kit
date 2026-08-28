@@ -296,8 +296,13 @@ h1 {
 }
 
 .remove-link-button:hover {
-  color: var(--interaction-blue);
-  background: var(--interaction-blue-soft);
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.remove-link-button:active {
+  color: #991b1b;
+  background: #fee2e2;
 }
 
 .date-edit-range {
