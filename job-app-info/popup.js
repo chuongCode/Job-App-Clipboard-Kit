@@ -230,6 +230,9 @@ function appendEditField(sectionElement, sectionKey, section, field, fieldIndex,
   input.className = "profile-input";
   input.rows = field.label === "Description" ? 3 : 1;
   input.value = field.value;
+  if (sectionKey === "personal" && field.label === "Location") {
+    input.placeholder = "City, State";
+  }
   input.id = `${sectionKey}-${groupIndex}-${fieldIndex}`;
   input.dataset.section = sectionKey;
   input.dataset.fieldIndex = String(fieldIndex);
