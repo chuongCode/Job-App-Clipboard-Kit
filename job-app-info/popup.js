@@ -39,6 +39,13 @@ const DEFAULT_PROFILE = {
 
 const profileElement = document.querySelector("#profile");
 const statusElement = document.querySelector("#status");
+const editButton = document.querySelector("#edit-button");
+const editActions = document.querySelector("#edit-actions");
+const saveButton = document.querySelector("#save-button");
+const cancelButton = document.querySelector("#cancel-button");
+const modeHint = document.querySelector("#mode-hint");
+const STORAGE_KEY = "profile";
+let currentProfile;
 let statusTimer;
 
 function showStatus(message, isError = false) {
@@ -104,4 +111,100 @@ function renderProfile(profile) {
   });
 }
 
-renderProfile(DEFAULT_PROFILE);
+function renderEditor(profile) {
+  profileElement.replaceChildren();
+
+  Object.entries(profile).forEach(([sectionKey, section]) => {
+    const sectionElement = document.createElement("section");
+    sectionElement.className = "section";
+
+    const heading = document.createElement("h2");
+    heading.className = "section-title";
+    heading.textContent = section.title;
+    sectionElement.append(heading);
+
+    section.fields.forEach((field, fieldIndex) => {
+      const row = document.createElement("label");
+      row.className = "edit-row";
+
+      const label = document.createElement("span");
+      label.className = "row-label";
+      label.textContent = field.label;
+
+      const input = document.createElement("input");
+      input.className = "profile-input";
+      input.type = "text";
+      input.value = field.value;
+      input.dataset.section = sectionKey;
+      input.dataset.fieldIndex = String(fieldIndex);
+
+      row.append(label, input);
+      sectionElement.append(row);
+    });
+
+    profileElement.append(sectionElement);
+  });
+}
+
+function setEditing(isEditing) {
+  editButton.hidden = isEditing;
+  editActions.hidden = !isEditing;
+  modeHint.textContent = isEditing ? "Update your saved profile" : "Click any value to copy";
+
+  if (isEditing) {
+    renderEditor(currentProfile);
+    profileElement.querySelector("input")?.focus();
+  } else {
+    renderProfile(currentProfile);
+  }
+}
+
+function readEditorValues() {
+  const updatedProfile = JSON.parse(JSON.stringify(currentProfile));
+
+  profileElement.querySelectorAll(".profile-input").forEach((input) => {
+    const field = updatedProfile[input.dataset.section].fields[Number(input.dataset.fieldIndex)];
+    field.value = input.value;
+  });
+
+  return updatedProfile;
+}
+
+async function saveProfile() {
+  const updatedProfile = readEditorValues();
+
+  try {
+    await browser.storage.local.set({ [STORAGE_KEY]: updatedProfile });
+    currentProfile = updatedProfile;
+    setEditing(false);
+    showStatus("Saved");
+  } catch (error) {
+    console.error("Could not save profile:", error);
+    showStatus("Save failed", true);
+  }
+}
+
+async function initialize() {
+  try {
+    const saved = await browser.storage.local.get(STORAGE_KEY);
+
+    if (saved[STORAGE_KEY]) {
+      currentProfile = saved[STORAGE_KEY];
+    } else {
+      currentProfile = DEFAULT_PROFILE;
+      await browser.storage.local.set({ [STORAGE_KEY]: DEFAULT_PROFILE });
+    }
+  } catch (error) {
+    console.error("Could not load saved profile:", error);
+    currentProfile = DEFAULT_PROFILE;
+    showStatus("Using default profile", true);
+  }
+
+  renderProfile(currentProfile);
+}
+
+editButton.addEventListener("click", () => setEditing(true));
+cancelButton.addEventListener("click", () => setEditing(false));
+saveButton.addEventListener("click", saveProfile);
+
+initialize();
