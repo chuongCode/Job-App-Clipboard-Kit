@@ -1,6 +1,6 @@
 # Job App Clipboard Kit
 
-Job App Clipboard Kit is a lightweight, local-only browser extension that keeps frequently used job application details within easy reach. Open the floating panel from the toolbar, then click any saved value to copy it to your clipboard.
+Job App Clipboard Kit is a lightweight, local-only browser extension that keeps frequently used job application details within easy reach. Inspired by the functionality of Simplify Copilot's clipboard feature.
 
 Click the toolbar icon to toggle a floating profile panel in the current webpage, then click any value to copy only that value. The panel remains open while you interact with the page. Use a section's pencil to update its values; **Save** stores them in Firefox's local extension storage so they remain available after the panel or browser closes.
 
@@ -32,3 +32,5 @@ New installations start with an empty profile. Existing saved values are preserv
 ## Why it asks for permissions
 
 The extension needs permission to copy information when you click it, remember your profile between browser sessions, and show the floating panel on the page where you open it. It only gets temporary access to the current tab after you click the toolbar icon.
+
+The robot's name is Samson.
