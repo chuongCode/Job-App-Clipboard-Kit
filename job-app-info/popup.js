@@ -55,6 +55,8 @@ let currentProfile;
 let editingProfile;
 let editingSectionKey = null;
 let statusTimer;
+let announcementTimer;
+const copyTimers = new WeakMap();
 
 function showStatus(message, isError = false) {
   window.clearTimeout(statusTimer);
@@ -66,14 +68,19 @@ function showStatus(message, isError = false) {
   }, 1000);
 }
 
-async function copyValue(value, row) {
+async function copyValue(value, target) {
   try {
     await navigator.clipboard.writeText(value);
-    const copyState = row.querySelector(".copy-state");
-    copyState.textContent = "Copied";
-    window.setTimeout(() => {
-      copyState.textContent = "";
-    }, 1000);
+    window.clearTimeout(copyTimers.get(target));
+    target.classList.add("copied");
+    copyTimers.set(target, window.setTimeout(() => target.classList.remove("copied"), 400));
+
+    window.clearTimeout(announcementTimer);
+    statusElement.classList.remove("visible", "error");
+    statusElement.textContent = "Copied";
+    announcementTimer = window.setTimeout(() => {
+      statusElement.textContent = "";
+    }, 600);
   } catch (error) {
     console.error("Could not copy value:", error);
     showStatus("Copy failed", true);
@@ -150,11 +157,7 @@ function appendCopyField(sectionElement, field) {
   value.className = "row-value";
   value.textContent = field.value;
 
-  const copyState = document.createElement("span");
-  copyState.className = "copy-state";
-  copyState.setAttribute("aria-live", "polite");
-
-  copyButton.append(value, copyState);
+  copyButton.append(value);
   copyButton.addEventListener("click", () => copyValue(field.value, copyButton));
   row.append(label, copyButton);
   sectionElement.append(row);
@@ -193,11 +196,6 @@ function appendDateField(sectionElement, field) {
     yearButton.addEventListener("click", () => copyValue(year, dateRange));
     dateRange.append(yearButton);
   });
-
-  const copyState = document.createElement("span");
-  copyState.className = "copy-state";
-  copyState.setAttribute("aria-live", "polite");
-  dateRange.append(copyState);
 
   row.append(label, dateRange);
   sectionElement.append(row);
