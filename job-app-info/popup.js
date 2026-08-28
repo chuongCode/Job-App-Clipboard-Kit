@@ -6,7 +6,9 @@ const DEFAULT_PROFILE = {
     title: "Personal",
     fields: [
       { label: "Name", value: "Richard Chuong" },
-      { label: "Location", value: "Oklahoma City, OK, USA" },
+      { label: "Address", value: "2121 69th Street" },
+      { label: "Location", value: "Oklahoma City, Oklahoma" },
+      { label: "ZIP", value: "73132" },
       { label: "Email", value: "chuongrichard@gmail.com" },
       { label: "Phone", value: "+14054145122" }
     ]
@@ -142,13 +144,26 @@ function createSectionHeader(sectionKey, section, isEditing) {
   return header;
 }
 
-function appendCopyField(sectionElement, field) {
+function formatFullAddress(section) {
+  const valueFor = (label) => section.fields.find((field) => field.label === label)?.value.trim() || "";
+  const addressAndLocation = [valueFor("Address"), valueFor("Location")].filter(Boolean).join(", ");
+  return [addressAndLocation, valueFor("ZIP")].filter(Boolean).join(" ");
+}
+
+function appendCopyField(sectionElement, field, labelCopyValue = "") {
   const row = document.createElement("div");
   row.className = "profile-row";
 
-  const label = document.createElement("span");
+  const label = document.createElement(labelCopyValue ? "button" : "span");
   label.className = "row-label";
   label.textContent = field.label;
+  if (labelCopyValue) {
+    label.classList.add("label-copy-button");
+    label.type = "button";
+    label.title = "Copy full address";
+    label.setAttribute("aria-label", "Copy full address");
+    label.addEventListener("click", () => copyValue(labelCopyValue, label));
+  }
 
   const copyButton = document.createElement("button");
   copyButton.className = "copy-button";
@@ -312,7 +327,10 @@ function renderProfile() {
         } else if (sectionKey === "education" && field.label === "Date") {
           appendDateField(sectionElement, field);
         } else {
-          appendCopyField(sectionElement, field);
+          const fullAddress = sectionKey === "personal" && field.label === "Location"
+            ? formatFullAddress(section)
+            : "";
+          appendCopyField(sectionElement, field, fullAddress);
         }
       });
     });
@@ -490,7 +508,10 @@ function mergeWithDefaults(savedProfile) {
     section.fields.forEach((field) => {
       const savedField = savedFields.find((candidate) => candidate.label === field.label);
       if (savedField && typeof savedField.value === "string") {
-        field.value = savedField.value;
+        const isLegacyLocation = sectionKey === "personal"
+          && field.label === "Location"
+          && savedField.value === "Oklahoma City, OK, USA";
+        if (!isLegacyLocation) field.value = savedField.value;
       }
     });
 

@@ -65,6 +65,7 @@ h1 {
 }
 
 .section-edit-button:focus-visible,
+.label-copy-button:focus-visible,
 .copy-button:focus-visible,
 .remove-link-button:focus-visible,
 .secondary-button:focus-visible,
@@ -175,6 +176,28 @@ h1 {
   background: var(--interaction-blue-soft);
 }
 
+.label-copy-button {
+  padding: 3px 4px;
+  border: 0;
+  border-radius: 4px;
+  color: #6b7280;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 100ms ease, color 100ms ease;
+}
+
+.label-copy-button:hover {
+  color: var(--interaction-blue);
+  background: var(--interaction-blue-soft);
+}
+
+.label-copy-button:active,
+.label-copy-button.copied {
+  color: var(--interaction-blue);
+  background: var(--interaction-blue-flash);
+}
+
 .copy-button:active,
 .copy-button.copied {
   color: var(--interaction-blue);
@@ -222,7 +245,8 @@ h1 {
 }
 
 .copy-button.copied,
-.date-part.copied {
+.date-part.copied,
+.label-copy-button.copied {
   animation: copy-flash 560ms cubic-bezier(.4, 0, .2, 1) forwards;
 }
 
@@ -413,12 +437,14 @@ h1 {
 @media (prefers-reduced-motion: reduce) {
   .status,
   .copy-button,
-  .date-part {
+  .date-part,
+  .label-copy-button {
     transition: none;
   }
 
   .copy-button.copied,
-  .date-part.copied {
+  .date-part.copied,
+  .label-copy-button.copied {
     animation: none;
   }
 }
