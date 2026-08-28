@@ -17,6 +17,13 @@ The extension has no backend, analytics, external requests, or third-party depen
 
 Temporary extensions are removed when Firefox exits.
 
+# Permanent Installation
+
+Or if you don't want to deal with all that, you can download the latest Mozilla-signed Firefox build:
+https://addons.mozilla.org/developers/addon/3062147/versions
+
+Open the `.xpi` in Firefox and confirm the installation prompt.
+
 The panel can be injected into regular `http`, `https`, and permitted `file` pages. Firefox blocks extensions from injecting into internal pages such as `about:debugging`, the built-in PDF viewer, and other protected browser pages. Navigating or reloading the tab removes the panel; click the toolbar icon to inject it again.
 
 ## Reload changes during development
