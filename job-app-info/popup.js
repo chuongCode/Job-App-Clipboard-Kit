@@ -50,7 +50,6 @@ const DEFAULT_PROFILE = {
 
 const profileElement = document.querySelector("#profile");
 const statusElement = document.querySelector("#status");
-const closeButton = document.querySelector("#close-button");
 const STORAGE_KEY = "profile";
 let currentProfile;
 let editingProfile;
@@ -540,5 +539,3 @@ async function initialize() {
 }
 
 initialize();
-
-closeButton.addEventListener("click", () => window.close());
