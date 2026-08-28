@@ -115,6 +115,15 @@ function createSectionHeader(sectionKey, section, isEditing) {
     const actions = document.createElement("div");
     actions.className = "section-actions";
 
+    if (sectionKey === "links" || sectionKey === "experience") {
+      const addButton = document.createElement("button");
+      addButton.className = "secondary-button compact-button";
+      addButton.type = "button";
+      addButton.textContent = "Add +";
+      addButton.addEventListener("click", sectionKey === "experience" ? addPosition : addLink);
+      actions.append(addButton);
+    }
+
     const cancelButton = document.createElement("button");
     cancelButton.className = "secondary-button compact-button";
     cancelButton.type = "button";
@@ -347,15 +356,6 @@ function renderProfile() {
         }
       });
     });
-
-    if (isEditing && (section.positions || sectionKey === "links")) {
-      const addButton = document.createElement("button");
-      addButton.className = "add-button";
-      addButton.type = "button";
-      addButton.textContent = "Add +";
-      addButton.addEventListener("click", section.positions ? addPosition : addLink);
-      sectionElement.append(addButton);
-    }
 
     profileElement.append(sectionElement);
   });

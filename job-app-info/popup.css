@@ -352,28 +352,6 @@ h1 {
   text-align: center;
 }
 
-.add-button {
-  width: 100%;
-  height: 30px;
-  margin-top: 6px;
-  padding: 4px 6px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 5px;
-  color: #2563eb;
-  background: transparent;
-  cursor: pointer;
-}
-
-.add-button:hover {
-  border-color: #93c5fd;
-  background: #eff6ff;
-}
-
-.add-button:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 1px;
-}
-
 .section-actions {
   display: flex;
   gap: 5px;
