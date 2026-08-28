@@ -27,6 +27,8 @@ const DEFAULT_PROFILE = {
           { label: "Title", value: "Software Engineer" },
           { label: "Company", value: "Paycom Software, Inc" },
           { label: "Location", value: "Oklahoma City, OK, USA" },
+          { label: "Start Date", value: "2025-06" },
+          { label: "End Date", value: "Present" },
           {
             label: "Description",
             value: "Built and maintained reliable software for customers and internal teams."
@@ -224,6 +226,8 @@ function addPosition() {
       { label: "Title", value: "" },
       { label: "Company", value: "" },
       { label: "Location", value: "" },
+      { label: "Start Date", value: "" },
+      { label: "End Date", value: "" },
       { label: "Description", value: "" }
     ]
   });
@@ -232,6 +236,20 @@ function addPosition() {
     ".section:nth-of-type(3) .position-title:last-of-type + .edit-row input"
   );
   newPosition?.focus();
+}
+
+function endDateValue(position) {
+  const endDate = position.fields.find((field) => field.label === "End Date")?.value.trim();
+  if (!endDate) return Number.NEGATIVE_INFINITY;
+  if (["present", "current", "now"].includes(endDate.toLowerCase())) return Number.POSITIVE_INFINITY;
+
+  const parsedDate = Date.parse(endDate);
+  return Number.isNaN(parsedDate) ? Number.NEGATIVE_INFINITY : parsedDate;
+}
+
+function sortExperiencePositions(profile) {
+  profile.experience.positions.sort((first, second) => endDateValue(second) - endDateValue(first));
+  return profile;
 }
 
 function mergeWithDefaults(savedProfile) {
@@ -243,7 +261,14 @@ function mergeWithDefaults(savedProfile) {
       const legacyFields = savedProfile?.[sectionKey]?.fields;
 
       if (Array.isArray(savedPositions)) {
-        section.positions = savedPositions;
+        section.positions = savedPositions.map((savedPosition) => {
+          const position = JSON.parse(JSON.stringify(section.positions[0]));
+          position.fields.forEach((field) => {
+            const savedField = savedPosition.fields?.find((candidate) => candidate.label === field.label);
+            if (savedField && typeof savedField.value === "string") field.value = savedField.value;
+          });
+          return position;
+        });
       } else if (Array.isArray(legacyFields)) {
         section.positions[0].fields.forEach((field) => {
           const savedField = legacyFields.find((candidate) => candidate.label === field.label);
@@ -264,11 +289,11 @@ function mergeWithDefaults(savedProfile) {
     });
   });
 
-  return mergedProfile;
+  return sortExperiencePositions(mergedProfile);
 }
 
 async function saveProfile() {
-  const updatedProfile = readEditorValues();
+  const updatedProfile = sortExperiencePositions(readEditorValues());
 
   try {
     await browser.storage.local.set({ [STORAGE_KEY]: updatedProfile });
@@ -289,8 +314,8 @@ async function initialize() {
       currentProfile = mergeWithDefaults(saved[STORAGE_KEY]);
       await browser.storage.local.set({ [STORAGE_KEY]: currentProfile });
     } else {
-      currentProfile = DEFAULT_PROFILE;
-      await browser.storage.local.set({ [STORAGE_KEY]: DEFAULT_PROFILE });
+      currentProfile = sortExperiencePositions(JSON.parse(JSON.stringify(DEFAULT_PROFILE)));
+      await browser.storage.local.set({ [STORAGE_KEY]: currentProfile });
     }
   } catch (error) {
     console.error("Could not load saved profile:", error);
