@@ -2,3 +2,7 @@
 *.xpi
 web-ext-artifacts/
 
+# Local agent skills
+skills/
+.agents/skills/
+.codex/skills/
