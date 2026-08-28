@@ -177,25 +177,20 @@ h1 {
 }
 
 .label-copy-button {
-  padding: 3px 4px;
-  border: 0;
-  border-radius: 4px;
+  padding: 0;
   color: #6b7280;
   background: transparent;
-  text-align: left;
   cursor: pointer;
-  transition: background-color 100ms ease, color 100ms ease;
+  transition: color 100ms ease;
 }
 
 .label-copy-button:hover {
   color: var(--interaction-blue);
-  background: var(--interaction-blue-soft);
 }
 
 .label-copy-button:active,
 .label-copy-button.copied {
   color: var(--interaction-blue);
-  background: var(--interaction-blue-flash);
 }
 
 .copy-button:active,
@@ -245,8 +240,7 @@ h1 {
 }
 
 .copy-button.copied,
-.date-part.copied,
-.label-copy-button.copied {
+.date-part.copied {
   animation: copy-flash 560ms cubic-bezier(.4, 0, .2, 1) forwards;
 }
 
@@ -443,8 +437,7 @@ h1 {
   }
 
   .copy-button.copied,
-  .date-part.copied,
-  .label-copy-button.copied {
+  .date-part.copied {
     animation: none;
   }
 }
