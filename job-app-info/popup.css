@@ -177,9 +177,13 @@ h1 {
 }
 
 .label-copy-button {
+  appearance: none;
   padding: 0;
+  border: 0;
+  border-radius: 0;
   color: #6b7280;
   background: transparent;
+  text-align: left;
   cursor: pointer;
   transition: color 100ms ease;
 }
@@ -190,7 +194,7 @@ h1 {
 
 .label-copy-button:active,
 .label-copy-button.copied {
-  color: var(--interaction-blue);
+  color: var(--interaction-blue-dark);
 }
 
 .copy-button:active,

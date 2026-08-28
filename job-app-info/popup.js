@@ -154,21 +154,15 @@ function appendCopyField(sectionElement, field, labelCopyValue = "") {
   const row = document.createElement("div");
   row.className = "profile-row";
 
-  const label = document.createElement("span");
+  const label = document.createElement(labelCopyValue ? "button" : "span");
   label.className = "row-label";
   label.textContent = field.label;
   if (labelCopyValue) {
     label.classList.add("label-copy-button");
-    label.tabIndex = 0;
-    label.setAttribute("role", "button");
+    label.type = "button";
     label.title = "Copy full address";
     label.setAttribute("aria-label", "Copy full address");
     label.addEventListener("click", () => copyValue(labelCopyValue, label));
-    label.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      copyValue(labelCopyValue, label);
-    });
   }
 
   const copyButton = document.createElement("button");
