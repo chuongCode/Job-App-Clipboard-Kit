@@ -138,6 +138,9 @@ h1 {
 }
 
 .position-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 8px 6px 2px;
   color: #374151;
   font-size: 11px;
@@ -428,6 +431,12 @@ h1 {
   border-color: #2563eb;
   outline: 2px solid #bfdbfe;
   outline-offset: 0;
+}
+
+.profile-input[aria-invalid="true"],
+.date-year-input[aria-invalid="true"] {
+  border-color: #dc2626;
+  background: #fef2f2;
 }
 
 .date-year-input {

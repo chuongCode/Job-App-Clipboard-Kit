@@ -40,11 +40,15 @@ const DEFAULT_PROFILE = {
   },
   education: {
     title: "Education",
-    fields: [
-      { label: "School", value: "University of Rochester" },
-      { label: "Degree", value: "Bachelor's" },
-      { label: "Discipline", value: "Computer Science" },
-      { label: "Date", value: "2021 - 2025" }
+    entries: [
+      {
+        fields: [
+          { label: "School", value: "University of Rochester" },
+          { label: "Degree", value: "Bachelor's" },
+          { label: "Discipline", value: "Computer Science" },
+          { label: "Date", value: "2021 - 2025" }
+        ]
+      }
     ]
   }
 };
@@ -114,12 +118,15 @@ function createSectionHeader(sectionKey, section, isEditing) {
     const actions = document.createElement("div");
     actions.className = "section-actions";
 
-    if (sectionKey === "links" || sectionKey === "experience") {
+    if (["links", "experience", "education"].includes(sectionKey)) {
       const addButton = document.createElement("button");
       addButton.className = "secondary-button compact-button";
       addButton.type = "button";
       addButton.textContent = "Add +";
-      addButton.addEventListener("click", sectionKey === "experience" ? addPosition : addLink);
+      const addItem = sectionKey === "experience" ? addPosition
+        : sectionKey === "education" ? addEducation
+          : addLink;
+      addButton.addEventListener("click", addItem);
       actions.append(addButton);
     }
 
@@ -304,8 +311,11 @@ function appendEditField(sectionElement, sectionKey, section, field, fieldIndex,
   input.id = `${sectionKey}-${groupIndex}-${fieldIndex}`;
   input.dataset.section = sectionKey;
   input.dataset.fieldIndex = String(fieldIndex);
-  if (section.positions) input.dataset.positionIndex = String(groupIndex);
+  if (section.positions || section.entries) input.dataset.positionIndex = String(groupIndex);
   input.addEventListener("keydown", handleEditorKeydown);
+  if (sectionKey === "education") {
+    input.addEventListener("input", () => input.removeAttribute("aria-invalid"));
+  }
   label.htmlFor = input.id;
 
   if (sectionKey === "links" && field.label === "Additional") {
@@ -328,7 +338,7 @@ function appendEditField(sectionElement, sectionKey, section, field, fieldIndex,
   sectionElement.append(row);
 }
 
-function appendDateEditField(sectionElement, sectionKey, field, fieldIndex) {
+function appendDateEditField(sectionElement, sectionKey, field, fieldIndex, groupIndex) {
   const years = field.value.match(/\b\d{4}\b/g) || ["", ""];
   const row = document.createElement("div");
   row.className = "edit-row";
@@ -341,6 +351,7 @@ function appendDateEditField(sectionElement, sectionKey, field, fieldIndex) {
   dateInputs.className = "date-edit-range";
   dateInputs.dataset.section = sectionKey;
   dateInputs.dataset.fieldIndex = String(fieldIndex);
+  if (groupIndex !== undefined) dateInputs.dataset.positionIndex = String(groupIndex);
 
   ["Start year", "End year"].forEach((ariaLabel, index) => {
     if (index > 0) {
@@ -360,6 +371,7 @@ function appendDateEditField(sectionElement, sectionKey, field, fieldIndex) {
     input.setAttribute("aria-label", ariaLabel);
     input.addEventListener("input", () => {
       input.value = input.value.replace(/\D/g, "").slice(0, 4);
+      input.removeAttribute("aria-invalid");
     });
     input.addEventListener("keydown", handleEditorKeydown);
     dateInputs.append(input);
@@ -500,13 +512,32 @@ function renderProfile() {
     sectionElement.className = "section";
     sectionElement.append(createSectionHeader(sectionKey, section, isEditing));
 
-    const groups = section.positions || [{ fields: section.fields }];
+    const groupedEntries = section.positions || section.entries;
+    const groups = groupedEntries || [{ fields: section.fields }];
 
     groups.forEach((group, groupIndex) => {
-      if (section.positions) {
+      if (groupedEntries) {
         const positionTitle = document.createElement("h3");
         positionTitle.className = "position-title";
-        positionTitle.textContent = `Position ${groupIndex + 1}`;
+        positionTitle.dataset.section = sectionKey;
+
+        const positionLabel = document.createElement("span");
+        const itemName = sectionKey === "education" ? "Education" : "Position";
+        positionLabel.textContent = `${itemName} ${groupIndex + 1}`;
+        positionTitle.append(positionLabel);
+
+        if (isEditing && groupedEntries.length > 1) {
+          const removeButton = document.createElement("button");
+          removeButton.className = "remove-link-button";
+          removeButton.type = "button";
+          removeButton.textContent = "−";
+          removeButton.title = `Remove ${itemName.toLowerCase()} ${groupIndex + 1}`;
+          removeButton.setAttribute("aria-label", removeButton.title);
+          const removeItem = sectionKey === "education" ? removeEducation : removePosition;
+          removeButton.addEventListener("click", () => removeItem(groupIndex));
+          positionTitle.append(removeButton);
+        }
+
         sectionElement.append(positionTitle);
       }
 
@@ -514,7 +545,7 @@ function renderProfile() {
         if (isEditing && sectionKey === "personal" && field.label === "Name") {
           appendNameEditField(sectionElement, sectionKey, field, fieldIndex);
         } else if (isEditing && sectionKey === "education" && field.label === "Date") {
-          appendDateEditField(sectionElement, sectionKey, field, fieldIndex);
+          appendDateEditField(sectionElement, sectionKey, field, fieldIndex, groupIndex);
         } else if (isEditing && sectionKey === "experience" && field.label === "Date") {
           appendExperienceDateEditField(sectionElement, field, fieldIndex, groupIndex);
         } else if (isEditing) {
@@ -564,16 +595,21 @@ function readEditorValues() {
 
   profileElement.querySelectorAll(".profile-input").forEach((input) => {
     const section = updatedProfile[input.dataset.section];
+    const groupedEntries = section.positions || section.entries;
     const fields = input.dataset.positionIndex === undefined
       ? section.fields
-      : section.positions[Number(input.dataset.positionIndex)].fields;
+      : groupedEntries[Number(input.dataset.positionIndex)].fields;
     const field = fields[Number(input.dataset.fieldIndex)];
     field.value = input.value;
   });
 
   profileElement.querySelectorAll(".date-edit-range").forEach((dateInputs) => {
     const section = updatedProfile[dateInputs.dataset.section];
-    const field = section.fields[Number(dateInputs.dataset.fieldIndex)];
+    const groupedEntries = section.positions || section.entries;
+    const fields = dateInputs.dataset.positionIndex === undefined
+      ? section.fields
+      : groupedEntries[Number(dateInputs.dataset.positionIndex)].fields;
+    const field = fields[Number(dateInputs.dataset.fieldIndex)];
     const years = dateInputs.querySelectorAll(".date-year-input");
     field.value = `${years[0].value} - ${years[1].value}`;
   });
@@ -626,6 +662,21 @@ function experienceDateInputsAreValid() {
   return false;
 }
 
+function educationFieldsAreComplete() {
+  const inputs = Array.from(profileElement.querySelectorAll(
+    'textarea[data-section="education"], .date-edit-range[data-section="education"] .date-year-input'
+  ));
+  inputs.forEach((input) => input.removeAttribute("aria-invalid"));
+
+  const emptyInputs = inputs.filter((input) => !input.value.trim());
+  if (!emptyInputs.length) return true;
+
+  emptyInputs.forEach((input) => input.setAttribute("aria-invalid", "true"));
+  emptyInputs[0].focus();
+  showStatus("Complete every education field", true);
+  return false;
+}
+
 function addPosition() {
   editingProfile = readEditorValues();
   editingProfile.experience.positions.push({
@@ -640,6 +691,39 @@ function addPosition() {
   renderProfile();
   const inputs = profileElement.querySelectorAll('textarea[data-section="experience"]');
   inputs[inputs.length - 6]?.focus();
+}
+
+function removePosition(positionIndex) {
+  editingProfile = readEditorValues();
+  editingProfile.experience.positions.splice(positionIndex, 1);
+  renderProfile();
+
+  const positions = profileElement.querySelectorAll('.position-title[data-section="experience"]');
+  positions[Math.min(positionIndex, positions.length - 1)]?.scrollIntoView({ block: "nearest" });
+}
+
+function addEducation() {
+  editingProfile = readEditorValues();
+  editingProfile.education.entries.push({
+    fields: [
+      { label: "School", value: "" },
+      { label: "Degree", value: "" },
+      { label: "Discipline", value: "" },
+      { label: "Date", value: " - " }
+    ]
+  });
+  renderProfile();
+  const inputs = profileElement.querySelectorAll('textarea[data-section="education"]');
+  inputs[inputs.length - 3]?.focus();
+}
+
+function removeEducation(educationIndex) {
+  editingProfile = readEditorValues();
+  editingProfile.education.entries.splice(educationIndex, 1);
+  renderProfile();
+
+  const entries = profileElement.querySelectorAll('.position-title[data-section="education"]');
+  entries[Math.min(educationIndex, entries.length - 1)]?.scrollIntoView({ block: "nearest" });
 }
 
 function addLink() {
@@ -713,13 +797,19 @@ function mergeWithDefaults(savedProfile) {
   const mergedProfile = JSON.parse(JSON.stringify(DEFAULT_PROFILE));
 
   Object.entries(mergedProfile).forEach(([sectionKey, section]) => {
-    if (section.positions) {
-      const savedPositions = savedProfile?.[sectionKey]?.positions;
+    if (section.positions || section.entries) {
+      const collectionKey = section.positions ? "positions" : "entries";
+      const savedPositions = savedProfile?.[sectionKey]?.[collectionKey];
       const legacyFields = savedProfile?.[sectionKey]?.fields;
+      const defaultEntry = section[collectionKey][0];
 
       if (Array.isArray(savedPositions)) {
-        section.positions = savedPositions.map((savedPosition) => {
-          const position = JSON.parse(JSON.stringify(section.positions[0]));
+        section[collectionKey] = savedPositions.map((savedPosition) => {
+          const position = JSON.parse(JSON.stringify(defaultEntry));
+          if (sectionKey === "education") {
+            mergeEducationFields(position.fields, savedPosition.fields || []);
+            return position;
+          }
           position.fields.forEach((field) => {
             const savedField = savedPosition.fields?.find((candidate) => candidate.label === field.label);
             if (savedField && typeof savedField.value === "string") {
@@ -733,7 +823,11 @@ function mergeWithDefaults(savedProfile) {
           return position;
         });
       } else if (Array.isArray(legacyFields)) {
-        section.positions[0].fields.forEach((field) => {
+        if (sectionKey === "education") {
+          mergeEducationFields(section[collectionKey][0].fields, legacyFields);
+          return;
+        }
+        section[collectionKey][0].fields.forEach((field) => {
           const savedField = legacyFields.find((candidate) => candidate.label === field.label);
           if (savedField && typeof savedField.value === "string") {
             field.value = savedField.value;
@@ -749,11 +843,6 @@ function mergeWithDefaults(savedProfile) {
 
     const savedFields = savedProfile?.[sectionKey]?.fields;
     if (!Array.isArray(savedFields)) return;
-
-    if (sectionKey === "education") {
-      mergeEducationFields(section.fields, savedFields);
-      return;
-    }
 
     section.fields.forEach((field) => {
       const savedField = savedFields.find((candidate) => candidate.label === field.label);
@@ -776,7 +865,7 @@ function mergeWithDefaults(savedProfile) {
 }
 
 async function saveSection() {
-  if (!dateInputsAreValid() || !experienceDateInputsAreValid()) return;
+  if (!educationFieldsAreComplete() || !dateInputsAreValid() || !experienceDateInputsAreValid()) return;
   const updatedProfile = normalizeLinks(sortExperiencePositions(readEditorValues()));
 
   try {
