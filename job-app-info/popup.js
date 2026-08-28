@@ -72,8 +72,10 @@ async function copyValue(value, target) {
   try {
     await navigator.clipboard.writeText(value);
     window.clearTimeout(copyTimers.get(target));
+    target.classList.remove("copied");
+    void target.offsetWidth;
     target.classList.add("copied");
-    copyTimers.set(target, window.setTimeout(() => target.classList.remove("copied"), 400));
+    copyTimers.set(target, window.setTimeout(() => target.classList.remove("copied"), 520));
 
     window.clearTimeout(announcementTimer);
     statusElement.classList.remove("visible", "error");

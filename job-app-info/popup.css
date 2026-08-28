@@ -215,6 +215,23 @@ h1 {
   color: #9ca3af;
 }
 
+.copy-button.copied,
+.date-part.copied {
+  animation: copy-flash 500ms ease-out forwards;
+}
+
+@keyframes copy-flash {
+  0%, 25% {
+    color: var(--interaction-blue-dark);
+    background: var(--interaction-blue-flash);
+  }
+
+  100% {
+    color: var(--interaction-blue);
+    background: var(--interaction-blue-soft);
+  }
+}
+
 .row-label {
   flex: 0 0 78px;
   color: #6b7280;
@@ -333,5 +350,10 @@ h1 {
   .copy-button,
   .date-part {
     transition: none;
+  }
+
+  .copy-button.copied,
+  .date-part.copied {
+    animation: none;
   }
 }
