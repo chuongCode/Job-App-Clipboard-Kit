@@ -42,7 +42,7 @@ const DEFAULT_PROFILE = {
     fields: [
       { label: "School", value: "University of Rochester" },
       { label: "Degree", value: "Bachelor's, Computer Science" },
-      { label: "Years", value: "2021 - 2025" }
+      { label: "Date", value: "2021 - 2025" }
     ]
   }
 };
@@ -320,7 +320,12 @@ function mergeWithDefaults(savedProfile) {
     if (!Array.isArray(savedFields)) return;
 
     section.fields.forEach((field) => {
-      const savedField = savedFields.find((candidate) => candidate.label === field.label);
+      const savedField = savedFields.find((candidate) => {
+        const isLegacyEducationDate = sectionKey === "education"
+          && field.label === "Date"
+          && candidate.label === "Years";
+        return candidate.label === field.label || isLegacyEducationDate;
+      });
       if (savedField && typeof savedField.value === "string") {
         field.value = savedField.value;
       }
