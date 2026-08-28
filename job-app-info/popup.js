@@ -21,13 +21,17 @@ const DEFAULT_PROFILE = {
   },
   experience: {
     title: "Experience",
-    fields: [
-      { label: "Title", value: "Software Engineer" },
-      { label: "Company", value: "Paycom Software, Inc" },
-      { label: "Location", value: "Oklahoma City, OK, USA" },
+    positions: [
       {
-        label: "Description",
-        value: "Built and maintained reliable software for customers and internal teams."
+        fields: [
+          { label: "Title", value: "Software Engineer" },
+          { label: "Company", value: "Paycom Software, Inc" },
+          { label: "Location", value: "Oklahoma City, OK, USA" },
+          {
+            label: "Description",
+            value: "Built and maintained reliable software for customers and internal teams."
+          }
+        ]
       }
     ]
   },
@@ -50,6 +54,7 @@ const cancelButton = document.querySelector("#cancel-button");
 const modeHint = document.querySelector("#mode-hint");
 const STORAGE_KEY = "profile";
 let currentProfile;
+let editingProfile;
 let statusTimer;
 
 function showStatus(message, isError = false) {
@@ -88,27 +93,38 @@ function renderProfile(profile) {
     heading.textContent = section.title;
     sectionElement.append(heading);
 
-    section.fields.forEach((field) => {
-      const row = document.createElement("button");
-      row.className = "profile-row";
-      row.type = "button";
-      row.title = `Copy ${field.label}`;
+    const groups = section.positions || [{ fields: section.fields }];
 
-      const label = document.createElement("span");
-      label.className = "row-label";
-      label.textContent = field.label;
+    groups.forEach((group, groupIndex) => {
+      if (section.positions) {
+        const positionTitle = document.createElement("h3");
+        positionTitle.className = "position-title";
+        positionTitle.textContent = `Position ${groupIndex + 1}`;
+        sectionElement.append(positionTitle);
+      }
 
-      const value = document.createElement("span");
-      value.className = "row-value";
-      value.textContent = field.value;
+      group.fields.forEach((field) => {
+        const row = document.createElement("button");
+        row.className = "profile-row";
+        row.type = "button";
+        row.title = `Copy ${field.label}`;
 
-      const copyState = document.createElement("span");
-      copyState.className = "copy-state";
-      copyState.setAttribute("aria-live", "polite");
+        const label = document.createElement("span");
+        label.className = "row-label";
+        label.textContent = field.label;
 
-      row.append(label, value, copyState);
-      row.addEventListener("click", () => copyValue(field.value, row));
-      sectionElement.append(row);
+        const value = document.createElement("span");
+        value.className = "row-value";
+        value.textContent = field.value;
+
+        const copyState = document.createElement("span");
+        copyState.className = "copy-state";
+        copyState.setAttribute("aria-live", "polite");
+
+        row.append(label, value, copyState);
+        row.addEventListener("click", () => copyValue(field.value, row));
+        sectionElement.append(row);
+      });
     });
 
     profileElement.append(sectionElement);
@@ -127,24 +143,45 @@ function renderEditor(profile) {
     heading.textContent = section.title;
     sectionElement.append(heading);
 
-    section.fields.forEach((field, fieldIndex) => {
-      const row = document.createElement("label");
-      row.className = "edit-row";
+    const groups = section.positions || [{ fields: section.fields }];
 
-      const label = document.createElement("span");
-      label.className = "row-label";
-      label.textContent = field.label;
+    groups.forEach((group, groupIndex) => {
+      if (section.positions) {
+        const positionTitle = document.createElement("h3");
+        positionTitle.className = "position-title";
+        positionTitle.textContent = `Position ${groupIndex + 1}`;
+        sectionElement.append(positionTitle);
+      }
 
-      const input = document.createElement("input");
-      input.className = "profile-input";
-      input.type = "text";
-      input.value = field.value;
-      input.dataset.section = sectionKey;
-      input.dataset.fieldIndex = String(fieldIndex);
+      group.fields.forEach((field, fieldIndex) => {
+        const row = document.createElement("label");
+        row.className = "edit-row";
 
-      row.append(label, input);
-      sectionElement.append(row);
+        const label = document.createElement("span");
+        label.className = "row-label";
+        label.textContent = field.label;
+
+        const input = document.createElement("input");
+        input.className = "profile-input";
+        input.type = "text";
+        input.value = field.value;
+        input.dataset.section = sectionKey;
+        input.dataset.fieldIndex = String(fieldIndex);
+        if (section.positions) input.dataset.positionIndex = String(groupIndex);
+
+        row.append(label, input);
+        sectionElement.append(row);
+      });
     });
+
+    if (section.positions) {
+      const addButton = document.createElement("button");
+      addButton.className = "add-button";
+      addButton.type = "button";
+      addButton.textContent = "Add +";
+      addButton.addEventListener("click", addPosition);
+      sectionElement.append(addButton);
+    }
 
     profileElement.append(sectionElement);
   });
@@ -156,28 +193,66 @@ function setEditing(isEditing) {
   modeHint.textContent = isEditing ? "Update your saved profile" : "Click any value to copy";
 
   if (isEditing) {
-    renderEditor(currentProfile);
+    editingProfile = JSON.parse(JSON.stringify(currentProfile));
+    renderEditor(editingProfile);
     profileElement.querySelector("input")?.focus();
   } else {
+    editingProfile = null;
     renderProfile(currentProfile);
   }
 }
 
 function readEditorValues() {
-  const updatedProfile = JSON.parse(JSON.stringify(currentProfile));
+  const updatedProfile = JSON.parse(JSON.stringify(editingProfile));
 
   profileElement.querySelectorAll(".profile-input").forEach((input) => {
-    const field = updatedProfile[input.dataset.section].fields[Number(input.dataset.fieldIndex)];
+    const section = updatedProfile[input.dataset.section];
+    const fields = input.dataset.positionIndex === undefined
+      ? section.fields
+      : section.positions[Number(input.dataset.positionIndex)].fields;
+    const field = fields[Number(input.dataset.fieldIndex)];
     field.value = input.value;
   });
 
   return updatedProfile;
 }
 
+function addPosition() {
+  editingProfile = readEditorValues();
+  editingProfile.experience.positions.push({
+    fields: [
+      { label: "Title", value: "" },
+      { label: "Company", value: "" },
+      { label: "Location", value: "" },
+      { label: "Description", value: "" }
+    ]
+  });
+  renderEditor(editingProfile);
+  const newPosition = profileElement.querySelector(
+    ".section:nth-of-type(3) .position-title:last-of-type + .edit-row input"
+  );
+  newPosition?.focus();
+}
+
 function mergeWithDefaults(savedProfile) {
   const mergedProfile = JSON.parse(JSON.stringify(DEFAULT_PROFILE));
 
   Object.entries(mergedProfile).forEach(([sectionKey, section]) => {
+    if (section.positions) {
+      const savedPositions = savedProfile?.[sectionKey]?.positions;
+      const legacyFields = savedProfile?.[sectionKey]?.fields;
+
+      if (Array.isArray(savedPositions)) {
+        section.positions = savedPositions;
+      } else if (Array.isArray(legacyFields)) {
+        section.positions[0].fields.forEach((field) => {
+          const savedField = legacyFields.find((candidate) => candidate.label === field.label);
+          if (savedField && typeof savedField.value === "string") field.value = savedField.value;
+        });
+      }
+      return;
+    }
+
     const savedFields = savedProfile?.[sectionKey]?.fields;
     if (!Array.isArray(savedFields)) return;
 
