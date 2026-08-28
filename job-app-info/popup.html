@@ -13,14 +13,13 @@
         <p id="mode-hint">Click any value to copy</p>
       </div>
       <button id="edit-button" class="text-button" type="button">Edit</button>
+      <div id="edit-actions" class="header-actions" hidden>
+        <button id="cancel-button" class="secondary-button" type="button">Cancel</button>
+        <button id="save-button" class="primary-button" type="button">Save</button>
+      </div>
     </header>
 
     <main id="profile" aria-live="polite"></main>
-
-    <footer id="edit-actions" class="edit-actions" hidden>
-      <button id="cancel-button" class="secondary-button" type="button">Cancel</button>
-      <button id="save-button" class="primary-button" type="button">Save</button>
-    </footer>
 
     <div id="status" class="status" role="status" aria-live="polite"></div>
     <script src="popup.js"></script>
