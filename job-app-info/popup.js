@@ -41,8 +41,10 @@ const DEFAULT_PROFILE = {
     title: "Education",
     fields: [
       { label: "School", value: "University of Rochester" },
-      { label: "Degree", value: "Bachelor's, Computer Science" },
-      { label: "Date", value: "2021 - 2025" }
+      { label: "Degree", value: "Bachelor's" },
+      { label: "Discipline", value: "Computer Science" },
+      { label: "Start Year", value: "2021" },
+      { label: "End Year", value: "2025" }
     ]
   }
 };
@@ -290,6 +292,29 @@ function sortExperiencePositions(profile) {
   return profile;
 }
 
+function mergeEducationFields(defaultFields, savedFields) {
+  const savedDegree = savedFields.find((field) => field.label === "Degree")?.value || "";
+  const degreeParts = savedDegree.split(",");
+  const savedDate = savedFields.find((field) => ["Date", "Years"].includes(field.label))?.value || "";
+  const yearMatches = savedDate.match(/\b\d{4}\b/g) || [];
+
+  defaultFields.forEach((field) => {
+    const exactField = savedFields.find((candidate) => candidate.label === field.label);
+
+    if (field.label === "Degree" && savedDegree) {
+      field.value = degreeParts[0].trim();
+    } else if (field.label === "Discipline") {
+      field.value = exactField?.value || degreeParts.slice(1).join(",").trim() || field.value;
+    } else if (field.label === "Start Year") {
+      field.value = exactField?.value || yearMatches[0] || field.value;
+    } else if (field.label === "End Year") {
+      field.value = exactField?.value || yearMatches[1] || field.value;
+    } else if (exactField && typeof exactField.value === "string") {
+      field.value = exactField.value;
+    }
+  });
+}
+
 function mergeWithDefaults(savedProfile) {
   const mergedProfile = JSON.parse(JSON.stringify(DEFAULT_PROFILE));
 
@@ -319,13 +344,13 @@ function mergeWithDefaults(savedProfile) {
     const savedFields = savedProfile?.[sectionKey]?.fields;
     if (!Array.isArray(savedFields)) return;
 
+    if (sectionKey === "education") {
+      mergeEducationFields(section.fields, savedFields);
+      return;
+    }
+
     section.fields.forEach((field) => {
-      const savedField = savedFields.find((candidate) => {
-        const isLegacyEducationDate = sectionKey === "education"
-          && field.label === "Date"
-          && candidate.label === "Years";
-        return candidate.label === field.label || isLegacyEducationDate;
-      });
+      const savedField = savedFields.find((candidate) => candidate.label === field.label);
       if (savedField && typeof savedField.value === "string") {
         field.value = savedField.value;
       }
