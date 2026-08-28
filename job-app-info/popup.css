@@ -64,6 +64,7 @@ h1 {
 
 .section-edit-button:focus-visible,
 .copy-button:focus-visible,
+.remove-link-button:focus-visible,
 .secondary-button:focus-visible,
 .primary-button:focus-visible,
 .profile-input:focus-visible,
@@ -264,6 +265,39 @@ h1 {
   background: #fff;
   line-height: 1.35;
   resize: vertical;
+}
+
+.removable-label {
+  display: flex;
+  width: 78px;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 5px;
+}
+
+.removable-label .row-label {
+  min-width: 0;
+  flex: 1;
+}
+
+.remove-link-button {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #94a3b8;
+  background: transparent;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.remove-link-button:hover {
+  color: var(--interaction-blue);
+  background: var(--interaction-blue-soft);
 }
 
 .date-edit-range {

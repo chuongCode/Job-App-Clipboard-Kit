@@ -204,10 +204,10 @@ function appendDateField(sectionElement, field) {
 }
 
 function appendEditField(sectionElement, sectionKey, section, field, fieldIndex, groupIndex) {
-  const row = document.createElement("label");
+  const row = document.createElement("div");
   row.className = "edit-row";
 
-  const label = document.createElement("span");
+  const label = document.createElement("label");
   label.className = "row-label";
   label.textContent = field.label;
 
@@ -215,12 +215,30 @@ function appendEditField(sectionElement, sectionKey, section, field, fieldIndex,
   input.className = "profile-input";
   input.rows = field.label === "Description" ? 3 : 1;
   input.value = field.value;
+  input.id = `${sectionKey}-${groupIndex}-${fieldIndex}`;
   input.dataset.section = sectionKey;
   input.dataset.fieldIndex = String(fieldIndex);
   if (section.positions) input.dataset.positionIndex = String(groupIndex);
   input.addEventListener("keydown", handleEditorKeydown);
+  label.htmlFor = input.id;
 
-  row.append(label, input);
+  if (sectionKey === "links" && field.label === "Additional") {
+    const labelArea = document.createElement("div");
+    labelArea.className = "removable-label";
+
+    const removeButton = document.createElement("button");
+    removeButton.className = "remove-link-button";
+    removeButton.type = "button";
+    removeButton.textContent = "−";
+    removeButton.title = "Remove link";
+    removeButton.setAttribute("aria-label", "Remove additional link");
+    removeButton.addEventListener("click", () => removeLink(fieldIndex));
+
+    labelArea.append(label, removeButton);
+    row.append(labelArea, input);
+  } else {
+    row.append(label, input);
+  }
   sectionElement.append(row);
 }
 
@@ -385,6 +403,15 @@ function addLink() {
   renderProfile();
   const inputs = profileElement.querySelectorAll('textarea[data-section="links"]');
   inputs[inputs.length - 1]?.focus();
+}
+
+function removeLink(fieldIndex) {
+  editingProfile = readEditorValues();
+  editingProfile.links.fields.splice(fieldIndex, 1);
+  renderProfile();
+
+  const inputs = profileElement.querySelectorAll('textarea[data-section="links"]');
+  inputs[Math.min(fieldIndex - 1, inputs.length - 1)]?.focus();
 }
 
 function endDateValue(position) {
