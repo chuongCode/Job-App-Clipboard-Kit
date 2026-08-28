@@ -184,18 +184,24 @@ function appendCopyField(sectionElement, field, labelCopyValue = null) {
     label.textContent = field.label;
   }
 
-  const copyButton = document.createElement("button");
-  copyButton.className = "copy-button";
-  copyButton.type = "button";
-  copyButton.title = `Copy ${field.label}`;
+  if (field.value.trim()) {
+    const copyButton = document.createElement("button");
+    copyButton.className = "copy-button";
+    copyButton.type = "button";
+    copyButton.title = `Copy ${field.label}`;
 
-  const value = document.createElement("span");
-  value.className = "row-value";
-  value.textContent = field.value;
+    const value = document.createElement("span");
+    value.className = "row-value";
+    value.textContent = field.value;
 
-  copyButton.append(value);
-  copyButton.addEventListener("click", () => copyValue(field.value, copyButton));
-  row.append(label, copyButton);
+    copyButton.append(value);
+    copyButton.addEventListener("click", () => copyValue(field.value, copyButton));
+    row.append(label, copyButton);
+  } else {
+    const emptyValue = document.createElement("span");
+    emptyValue.className = "empty-value";
+    row.append(label, emptyValue);
+  }
   sectionElement.append(row);
 }
 
@@ -352,7 +358,7 @@ function renderProfile() {
           const fullAddress = sectionKey === "personal" && field.label === "Location"
             ? formatFullAddress(section)
             : null;
-          appendCopyField(sectionElement, field, fullAddress);
+          appendCopyField(sectionElement, field, fullAddress || null);
         }
       });
     });
