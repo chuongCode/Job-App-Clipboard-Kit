@@ -3,6 +3,17 @@
   "name": "Job App Clipboard Kit",
   "version": "0.1.0",
   "description": "Quickly copy frequently used job application information.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "job-app-clipboard-kit@extensions.local",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  },
   "permissions": [
     "storage",
     "clipboardWrite",
