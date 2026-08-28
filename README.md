@@ -7,7 +7,7 @@ The extension has no backend, analytics, external requests, or third-party depen
 ## File structure
 
 ```text
-job-app-info/
+Job-App-Profile-Kit/
 ├── manifest.json
 ├── background.js
 ├── content-panel.js
@@ -26,7 +26,7 @@ job-app-info/
 1. Open `about:debugging` in Firefox.
 2. Select **This Firefox**.
 3. Click **Load Temporary Add-on**.
-4. Select this folder's `manifest.json` file.
+4. Select the repository root's `manifest.json` file.
 5. Pin **Job App Info** to the toolbar if you want it to remain visible.
 6. Open a normal webpage and click the toolbar icon to show or hide the floating panel. The X also closes it.
 
