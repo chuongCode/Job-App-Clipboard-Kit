@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Job App Info",
+  "name": "Job App Clipboard Kit",
   "version": "0.1.0",
   "description": "Quickly copy frequently used job application information.",
   "permissions": [
@@ -15,7 +15,7 @@
     ]
   },
   "action": {
-    "default_title": "Job App Info",
+    "default_title": "Job App Clipboard Kit",
     "default_icon": {
       "16": "icons/robot-v4-16.png",
       "32": "icons/robot-v4-32.png",

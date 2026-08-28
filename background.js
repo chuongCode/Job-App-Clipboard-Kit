@@ -13,6 +13,6 @@ browser.action.onClicked.addListener(async (tab) => {
       files: ["content-panel.js"]
     });
   } catch (error) {
-    console.error("Could not toggle Job App Profile Kit:", error);
+    console.error("Could not toggle Job App Clipboard Kit:", error);
   }
 });

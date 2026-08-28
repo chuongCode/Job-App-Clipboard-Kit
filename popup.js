@@ -1,24 +1,24 @@
 "use strict";
 
-// Edit the default values here. They are used the first time the extension runs.
-const DEFAULT_PROFILE = {
+// Empty profile structure used for first-run setup and saved-data migrations.
+const EMPTY_PROFILE = {
   personal: {
     title: "Personal",
     fields: [
-      { label: "Name", value: "Richard Chuong" },
-      { label: "Address", value: "2121 69th Street" },
-      { label: "Location", value: "Oklahoma City, Oklahoma" },
-      { label: "ZIP", value: "73132" },
-      { label: "Email", value: "chuongrichard@gmail.com" },
-      { label: "Phone", value: "+14054145122" }
+      { label: "Name", value: "" },
+      { label: "Address", value: "" },
+      { label: "Location", value: "" },
+      { label: "ZIP", value: "" },
+      { label: "Email", value: "" },
+      { label: "Phone", value: "" }
     ]
   },
   links: {
     title: "Links",
     fields: [
-      { label: "LinkedIn", value: "https://www.linkedin.com/in/your-profile" },
-      { label: "GitHub", value: "https://github.com/your-username" },
-      { label: "Portfolio", value: "https://your-portfolio.example" }
+      { label: "LinkedIn", value: "" },
+      { label: "GitHub", value: "" },
+      { label: "Portfolio", value: "" }
     ]
   },
   experience: {
@@ -26,14 +26,11 @@ const DEFAULT_PROFILE = {
     positions: [
       {
         fields: [
-          { label: "Title", value: "Software Engineer" },
-          { label: "Company", value: "Paycom Software, Inc" },
-          { label: "Location", value: "Oklahoma City, OK, USA" },
-          { label: "Date", value: "Jun 2025 - Present" },
-          {
-            label: "Description",
-            value: "Built and maintained reliable software for customers and internal teams."
-          }
+          { label: "Title", value: "" },
+          { label: "Company", value: "" },
+          { label: "Location", value: "" },
+          { label: "Date", value: "" },
+          { label: "Description", value: "" }
         ]
       }
     ]
@@ -43,10 +40,10 @@ const DEFAULT_PROFILE = {
     entries: [
       {
         fields: [
-          { label: "School", value: "University of Rochester" },
-          { label: "Degree", value: "Bachelor's" },
-          { label: "Discipline", value: "Computer Science" },
-          { label: "Date", value: "2021 - 2025" }
+          { label: "School", value: "" },
+          { label: "Degree", value: "" },
+          { label: "Discipline", value: "" },
+          { label: "Date", value: "" }
         ]
       }
     ]
@@ -794,7 +791,7 @@ function mergeEducationFields(defaultFields, savedFields) {
 }
 
 function mergeWithDefaults(savedProfile) {
-  const mergedProfile = JSON.parse(JSON.stringify(DEFAULT_PROFILE));
+  const mergedProfile = JSON.parse(JSON.stringify(EMPTY_PROFILE));
 
   Object.entries(mergedProfile).forEach(([sectionKey, section]) => {
     if (section.positions || section.entries) {
@@ -847,10 +844,7 @@ function mergeWithDefaults(savedProfile) {
     section.fields.forEach((field) => {
       const savedField = savedFields.find((candidate) => candidate.label === field.label);
       if (savedField && typeof savedField.value === "string") {
-        const isLegacyLocation = sectionKey === "personal"
-          && field.label === "Location"
-          && savedField.value === "Oklahoma City, OK, USA";
-        if (!isLegacyLocation) field.value = savedField.value;
+        field.value = savedField.value;
       }
     });
 
@@ -889,13 +883,13 @@ async function initialize() {
       currentProfile = mergeWithDefaults(saved[STORAGE_KEY]);
       await browser.storage.local.set({ [STORAGE_KEY]: currentProfile });
     } else {
-      currentProfile = sortExperiencePositions(JSON.parse(JSON.stringify(DEFAULT_PROFILE)));
+      currentProfile = sortExperiencePositions(JSON.parse(JSON.stringify(EMPTY_PROFILE)));
       await browser.storage.local.set({ [STORAGE_KEY]: currentProfile });
     }
   } catch (error) {
     console.error("Could not load saved profile:", error);
-    currentProfile = DEFAULT_PROFILE;
-    showStatus("Using default profile", true);
+    currentProfile = JSON.parse(JSON.stringify(EMPTY_PROFILE));
+    showStatus("Could not load profile", true);
   }
 
   renderProfile();
