@@ -66,7 +66,7 @@ h1 {
 }
 
 .text-button:focus-visible,
-.profile-row:focus-visible,
+.copy-button:focus-visible,
 .secondary-button:focus-visible,
 .primary-button:focus-visible,
 .profile-input:focus-visible {
@@ -109,6 +109,14 @@ h1 {
   width: 100%;
   align-items: center;
   min-height: 34px;
+  padding: 2px 6px;
+}
+
+.copy-button {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
   padding: 5px 6px;
   border: 0;
   border-radius: 5px;
@@ -118,7 +126,7 @@ h1 {
   cursor: pointer;
 }
 
-.profile-row:hover {
+.copy-button:hover {
   background: #f3f4f6;
 }
 

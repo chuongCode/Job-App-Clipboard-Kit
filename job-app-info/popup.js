@@ -106,14 +106,17 @@ function renderProfile(profile) {
       }
 
       group.fields.forEach((field) => {
-        const row = document.createElement("button");
+        const row = document.createElement("div");
         row.className = "profile-row";
-        row.type = "button";
-        row.title = `Copy ${field.label}`;
 
         const label = document.createElement("span");
         label.className = "row-label";
         label.textContent = field.label;
+
+        const copyButton = document.createElement("button");
+        copyButton.className = "copy-button";
+        copyButton.type = "button";
+        copyButton.title = `Copy ${field.label}`;
 
         const value = document.createElement("span");
         value.className = "row-value";
@@ -123,8 +126,9 @@ function renderProfile(profile) {
         copyState.className = "copy-state";
         copyState.setAttribute("aria-live", "polite");
 
-        row.append(label, value, copyState);
-        row.addEventListener("click", () => copyValue(field.value, row));
+        copyButton.append(value, copyState);
+        copyButton.addEventListener("click", () => copyValue(field.value, copyButton));
+        row.append(label, copyButton);
         sectionElement.append(row);
       });
     });
