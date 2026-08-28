@@ -29,8 +29,7 @@ const DEFAULT_PROFILE = {
           { label: "Title", value: "Software Engineer" },
           { label: "Company", value: "Paycom Software, Inc" },
           { label: "Location", value: "Oklahoma City, OK, USA" },
-          { label: "Start Date", value: "2025-06" },
-          { label: "End Date", value: "Present" },
+          { label: "Date", value: "Jun 2025 - Present" },
           {
             label: "Description",
             value: "Built and maintained reliable software for customers and internal teams."
@@ -250,8 +249,8 @@ function appendNameField(sectionElement, field) {
 }
 
 function appendDateField(sectionElement, field) {
-  const years = field.value.match(/\b\d{4}\b/g);
-  if (!years || years.length < 2) {
+  const parts = field.value.split(/\s+-\s+/).map((part) => part.trim()).filter(Boolean);
+  if (parts.length < 2) {
     appendCopyField(sectionElement, field);
     return;
   }
@@ -266,7 +265,7 @@ function appendDateField(sectionElement, field) {
   const dateRange = document.createElement("div");
   dateRange.className = "date-range";
 
-  years.slice(0, 2).forEach((year, index) => {
+  parts.slice(0, 2).forEach((datePart, index) => {
     if (index > 0) {
       const separator = document.createElement("span");
       separator.className = "date-separator";
@@ -277,9 +276,9 @@ function appendDateField(sectionElement, field) {
     const yearButton = document.createElement("button");
     yearButton.className = "date-part";
     yearButton.type = "button";
-    yearButton.textContent = year;
-    yearButton.title = `Copy ${year}`;
-    yearButton.addEventListener("click", () => copyValue(year, dateRange));
+    yearButton.textContent = datePart;
+    yearButton.title = `Copy ${datePart}`;
+    yearButton.addEventListener("click", () => copyValue(datePart, yearButton));
     dateRange.append(yearButton);
   });
 
@@ -370,6 +369,98 @@ function appendDateEditField(sectionElement, sectionKey, field, fieldIndex) {
   sectionElement.append(row);
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function parseMonthYear(value) {
+  const trimmedValue = value.trim();
+  if (["present", "current", "now"].includes(trimmedValue.toLowerCase())) {
+    return { month: "Present", year: "" };
+  }
+
+  const isoMatch = trimmedValue.match(/^(\d{4})-(\d{1,2})$/);
+  if (isoMatch) {
+    return { month: MONTHS[Number(isoMatch[2]) - 1] || "", year: isoMatch[1] };
+  }
+
+  const monthYearMatch = trimmedValue.match(/^([A-Za-z]+)\s+(\d{4})$/);
+  if (monthYearMatch) {
+    const month = MONTHS.find((candidate) => candidate.toLowerCase() === monthYearMatch[1].slice(0, 3).toLowerCase());
+    return { month: month || "", year: monthYearMatch[2] };
+  }
+
+  return { month: "", year: trimmedValue.match(/\b\d{4}\b/)?.[0] || "" };
+}
+
+function formatLegacyExperienceDate(value) {
+  const parsed = parseMonthYear(value);
+  if (parsed.month === "Present") return "Present";
+  return [parsed.month, parsed.year].filter(Boolean).join(" ");
+}
+
+function appendExperienceDateEditField(sectionElement, field, fieldIndex, positionIndex) {
+  const parts = field.value.split(/\s+-\s+/, 2);
+  const dates = [parseMonthYear(parts[0] || ""), parseMonthYear(parts[1] || "")];
+  const row = document.createElement("div");
+  row.className = "edit-row";
+
+  const label = document.createElement("span");
+  label.className = "row-label";
+  label.textContent = field.label;
+
+  const dateInputs = document.createElement("div");
+  dateInputs.className = "experience-date-edit-range";
+  dateInputs.dataset.section = "experience";
+  dateInputs.dataset.positionIndex = String(positionIndex);
+  dateInputs.dataset.fieldIndex = String(fieldIndex);
+
+  dates.forEach((date, index) => {
+    if (index > 0) {
+      const separator = document.createElement("span");
+      separator.className = "date-separator";
+      separator.textContent = "–";
+      dateInputs.append(separator);
+    }
+
+    const half = document.createElement("div");
+    half.className = "experience-date-half";
+
+    const month = document.createElement("select");
+    month.className = "date-month-input";
+    month.required = true;
+    month.setAttribute("aria-label", `${index ? "End" : "Start"} month`);
+    const placeholder = new Option("Month", "");
+    placeholder.disabled = true;
+    placeholder.hidden = true;
+    month.append(placeholder);
+    MONTHS.forEach((monthName) => month.append(new Option(monthName, monthName)));
+    if (index === 1) month.append(new Option("Present", "Present"));
+    month.value = date.month;
+    month.addEventListener("change", () => {
+      const year = half.querySelector(".experience-date-year-input");
+      if (month.value === "Present") year.value = "";
+    });
+
+    const year = document.createElement("input");
+    year.className = "experience-date-year-input";
+    year.type = "text";
+    year.inputMode = "numeric";
+    year.maxLength = 4;
+    year.placeholder = "Year";
+    year.setAttribute("aria-label", `${index ? "End" : "Start"} year`);
+    year.value = date.year;
+    year.addEventListener("input", () => {
+      year.value = year.value.replace(/\D/g, "").slice(0, 4);
+    });
+    year.addEventListener("keydown", handleEditorKeydown);
+
+    half.append(month, year);
+    dateInputs.append(half);
+  });
+
+  row.append(label, dateInputs);
+  sectionElement.append(row);
+}
+
 function appendNameEditField(sectionElement, sectionKey, field, fieldIndex) {
   const row = document.createElement("div");
   row.className = "edit-row";
@@ -424,11 +515,13 @@ function renderProfile() {
           appendNameEditField(sectionElement, sectionKey, field, fieldIndex);
         } else if (isEditing && sectionKey === "education" && field.label === "Date") {
           appendDateEditField(sectionElement, sectionKey, field, fieldIndex);
+        } else if (isEditing && sectionKey === "experience" && field.label === "Date") {
+          appendExperienceDateEditField(sectionElement, field, fieldIndex, groupIndex);
         } else if (isEditing) {
           appendEditField(sectionElement, sectionKey, section, field, fieldIndex, groupIndex);
         } else if (sectionKey === "personal" && field.label === "Name") {
           appendNameField(sectionElement, field);
-        } else if (sectionKey === "education" && field.label === "Date") {
+        } else if (["education", "experience"].includes(sectionKey) && field.label === "Date") {
           appendDateField(sectionElement, field);
         } else {
           const fullAddress = sectionKey === "personal" && field.label === "Location"
@@ -485,6 +578,18 @@ function readEditorValues() {
     field.value = `${years[0].value} - ${years[1].value}`;
   });
 
+  profileElement.querySelectorAll(".experience-date-edit-range").forEach((dateInputs) => {
+    const position = updatedProfile.experience.positions[Number(dateInputs.dataset.positionIndex)];
+    const field = position.fields[Number(dateInputs.dataset.fieldIndex)];
+    const halves = dateInputs.querySelectorAll(".experience-date-half");
+    const values = Array.from(halves, (half) => {
+      const month = half.querySelector(".date-month-input").value;
+      const year = half.querySelector(".experience-date-year-input").value;
+      return month === "Present" ? "Present" : [month, year].filter(Boolean).join(" ");
+    });
+    field.value = `${values[0]} - ${values[1]}`;
+  });
+
   profileElement.querySelectorAll(".name-edit-fields").forEach((nameInputs) => {
     const section = updatedProfile[nameInputs.dataset.section];
     const field = section.fields[Number(nameInputs.dataset.fieldIndex)];
@@ -505,6 +610,22 @@ function dateInputsAreValid() {
   return false;
 }
 
+function experienceDateInputsAreValid() {
+  const halves = Array.from(profileElement.querySelectorAll(".experience-date-half"));
+  const invalidHalf = halves.find((half) => {
+    const month = half.querySelector(".date-month-input");
+    const year = half.querySelector(".experience-date-year-input");
+    return !month.value || (month.value !== "Present" && !/^\d{4}$/.test(year.value));
+  });
+
+  if (!invalidHalf) return true;
+  const month = invalidHalf.querySelector(".date-month-input");
+  const year = invalidHalf.querySelector(".experience-date-year-input");
+  (month.value ? year : month).focus();
+  showStatus(month.value ? "Enter a 4-digit year" : "Choose a month", true);
+  return false;
+}
+
 function addPosition() {
   editingProfile = readEditorValues();
   editingProfile.experience.positions.push({
@@ -512,8 +633,7 @@ function addPosition() {
       { label: "Title", value: "" },
       { label: "Company", value: "" },
       { label: "Location", value: "" },
-      { label: "Start Date", value: "" },
-      { label: "End Date", value: "" },
+      { label: "Date", value: " - " },
       { label: "Description", value: "" }
     ]
   });
@@ -540,7 +660,8 @@ function removeLink(fieldIndex) {
 }
 
 function endDateValue(position) {
-  const endDate = position.fields.find((field) => field.label === "End Date")?.value.trim();
+  const dateRange = position.fields.find((field) => field.label === "Date")?.value || "";
+  const endDate = dateRange.split(/\s+-\s+/)[1]?.trim();
   if (!endDate) return Number.NEGATIVE_INFINITY;
   if (["present", "current", "now"].includes(endDate.toLowerCase())) return Number.POSITIVE_INFINITY;
 
@@ -601,14 +722,26 @@ function mergeWithDefaults(savedProfile) {
           const position = JSON.parse(JSON.stringify(section.positions[0]));
           position.fields.forEach((field) => {
             const savedField = savedPosition.fields?.find((candidate) => candidate.label === field.label);
-            if (savedField && typeof savedField.value === "string") field.value = savedField.value;
+            if (savedField && typeof savedField.value === "string") {
+              field.value = savedField.value;
+            } else if (field.label === "Date") {
+              const start = savedPosition.fields?.find((candidate) => candidate.label === "Start Date")?.value || "";
+              const end = savedPosition.fields?.find((candidate) => candidate.label === "End Date")?.value || "";
+              field.value = `${formatLegacyExperienceDate(start)} - ${formatLegacyExperienceDate(end)}`;
+            }
           });
           return position;
         });
       } else if (Array.isArray(legacyFields)) {
         section.positions[0].fields.forEach((field) => {
           const savedField = legacyFields.find((candidate) => candidate.label === field.label);
-          if (savedField && typeof savedField.value === "string") field.value = savedField.value;
+          if (savedField && typeof savedField.value === "string") {
+            field.value = savedField.value;
+          } else if (field.label === "Date") {
+            const start = legacyFields.find((candidate) => candidate.label === "Start Date")?.value || "";
+            const end = legacyFields.find((candidate) => candidate.label === "End Date")?.value || "";
+            field.value = `${formatLegacyExperienceDate(start)} - ${formatLegacyExperienceDate(end)}`;
+          }
         });
       }
       return;
@@ -643,7 +776,7 @@ function mergeWithDefaults(savedProfile) {
 }
 
 async function saveSection() {
-  if (!dateInputsAreValid()) return;
+  if (!dateInputsAreValid() || !experienceDateInputsAreValid()) return;
   const updatedProfile = normalizeLinks(sortExperiencePositions(readEditorValues()));
 
   try {

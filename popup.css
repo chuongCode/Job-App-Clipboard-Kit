@@ -71,7 +71,9 @@ h1 {
 .secondary-button:focus-visible,
 .primary-button:focus-visible,
 .profile-input:focus-visible,
-.date-year-input:focus-visible {
+.date-year-input:focus-visible,
+.date-month-input:focus-visible,
+.experience-date-year-input:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 1px;
 }
@@ -363,6 +365,45 @@ h1 {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.experience-date-edit-range {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 3px;
+}
+
+.experience-date-half {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 3px;
+}
+
+.date-month-input,
+.experience-date-year-input {
+  width: 100%;
+  height: 30px;
+  min-width: 0;
+  padding: 5px 4px;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  color: inherit;
+  background: #fff;
+}
+
+.experience-date-year-input {
+  text-align: center;
+}
+
+.date-month-input:invalid {
+  color: #9ca3af;
+}
+
+.date-month-input option {
+  color: #1f2937;
 }
 
 .name-edit-fields {
