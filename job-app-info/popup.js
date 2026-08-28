@@ -113,15 +113,6 @@ function createSectionHeader(sectionKey, section, isEditing) {
     const actions = document.createElement("div");
     actions.className = "section-actions";
 
-    if (sectionKey === "experience") {
-      const addButton = document.createElement("button");
-      addButton.className = "secondary-button compact-button";
-      addButton.type = "button";
-      addButton.textContent = "Add +";
-      addButton.addEventListener("click", addPosition);
-      actions.append(addButton);
-    }
-
     const cancelButton = document.createElement("button");
     cancelButton.className = "secondary-button compact-button";
     cancelButton.type = "button";
@@ -326,17 +317,12 @@ function renderProfile() {
       });
     });
 
-    if (sectionKey === "links") {
-      const addButton = document.createElement(isEditing ? "button" : "div");
+    if (isEditing && (section.positions || sectionKey === "links")) {
+      const addButton = document.createElement("button");
       addButton.className = "add-button";
+      addButton.type = "button";
       addButton.textContent = "Add +";
-      if (isEditing) {
-        addButton.type = "button";
-        addButton.addEventListener("click", addLink);
-      } else {
-        addButton.classList.add("add-button-placeholder");
-        addButton.setAttribute("aria-hidden", "true");
-      }
+      addButton.addEventListener("click", section.positions ? addPosition : addLink);
       sectionElement.append(addButton);
     }
 

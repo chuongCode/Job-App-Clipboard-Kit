@@ -341,11 +341,6 @@ h1 {
   cursor: pointer;
 }
 
-.add-button-placeholder {
-  visibility: hidden;
-  pointer-events: none;
-}
-
 .add-button:hover {
   border-color: #93c5fd;
   background: #eff6ff;
