@@ -156,19 +156,23 @@ function appendCopyField(sectionElement, field, labelCopyValue = null) {
 
   const label = document.createElement("span");
   label.className = "row-label";
-  label.textContent = field.label;
   if (labelCopyValue !== null) {
-    label.classList.add("label-copy-button");
-    label.tabIndex = 0;
-    label.setAttribute("role", "button");
-    label.title = "Copy full address";
-    label.setAttribute("aria-label", "Copy full address");
-    label.addEventListener("click", () => copyValue(labelCopyValue, label));
-    label.addEventListener("keydown", (event) => {
+    const labelTarget = document.createElement("span");
+    labelTarget.className = "label-copy-target";
+    labelTarget.textContent = field.label;
+    labelTarget.tabIndex = 0;
+    labelTarget.setAttribute("role", "button");
+    labelTarget.title = "Copy full address";
+    labelTarget.setAttribute("aria-label", "Copy full address");
+    labelTarget.addEventListener("click", () => copyValue(labelCopyValue, labelTarget));
+    labelTarget.addEventListener("keydown", (event) => {
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
-      copyValue(labelCopyValue, label);
+      copyValue(labelCopyValue, labelTarget);
     });
+    label.append(labelTarget);
+  } else {
+    label.textContent = field.label;
   }
 
   const copyButton = document.createElement("button");
