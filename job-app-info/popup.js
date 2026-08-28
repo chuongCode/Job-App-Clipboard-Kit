@@ -224,6 +224,47 @@ function appendEditField(sectionElement, sectionKey, section, field, fieldIndex,
   sectionElement.append(row);
 }
 
+function appendDateEditField(sectionElement, sectionKey, field, fieldIndex) {
+  const years = field.value.match(/\b\d{4}\b/g) || ["", ""];
+  const row = document.createElement("div");
+  row.className = "edit-row";
+
+  const label = document.createElement("span");
+  label.className = "row-label";
+  label.textContent = field.label;
+
+  const dateInputs = document.createElement("div");
+  dateInputs.className = "date-edit-range";
+  dateInputs.dataset.section = sectionKey;
+  dateInputs.dataset.fieldIndex = String(fieldIndex);
+
+  ["Start year", "End year"].forEach((ariaLabel, index) => {
+    if (index > 0) {
+      const separator = document.createElement("span");
+      separator.className = "date-separator";
+      separator.textContent = "–";
+      dateInputs.append(separator);
+    }
+
+    const input = document.createElement("input");
+    input.className = "date-year-input";
+    input.type = "text";
+    input.inputMode = "numeric";
+    input.maxLength = 4;
+    input.pattern = "[0-9]{4}";
+    input.value = years[index] || "";
+    input.setAttribute("aria-label", ariaLabel);
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/\D/g, "").slice(0, 4);
+    });
+    input.addEventListener("keydown", handleEditorKeydown);
+    dateInputs.append(input);
+  });
+
+  row.append(label, dateInputs);
+  sectionElement.append(row);
+}
+
 function renderProfile() {
   profileElement.replaceChildren();
 
@@ -245,7 +286,9 @@ function renderProfile() {
       }
 
       group.fields.forEach((field, fieldIndex) => {
-        if (isEditing) {
+        if (isEditing && sectionKey === "education" && field.label === "Date") {
+          appendDateEditField(sectionElement, sectionKey, field, fieldIndex);
+        } else if (isEditing) {
           appendEditField(sectionElement, sectionKey, section, field, fieldIndex, groupIndex);
         } else if (sectionKey === "education" && field.label === "Date") {
           appendDateField(sectionElement, field);
@@ -299,7 +342,24 @@ function readEditorValues() {
     field.value = input.value;
   });
 
+  profileElement.querySelectorAll(".date-edit-range").forEach((dateInputs) => {
+    const section = updatedProfile[dateInputs.dataset.section];
+    const field = section.fields[Number(dateInputs.dataset.fieldIndex)];
+    const years = dateInputs.querySelectorAll(".date-year-input");
+    field.value = `${years[0].value} - ${years[1].value}`;
+  });
+
   return updatedProfile;
+}
+
+function dateInputsAreValid() {
+  const invalidInput = Array.from(profileElement.querySelectorAll(".date-year-input"))
+    .find((input) => !/^\d{4}$/.test(input.value));
+
+  if (!invalidInput) return true;
+  invalidInput.focus();
+  showStatus("Enter a 4-digit year", true);
+  return false;
 }
 
 function addPosition() {
@@ -401,6 +461,7 @@ function mergeWithDefaults(savedProfile) {
 }
 
 async function saveSection() {
+  if (!dateInputsAreValid()) return;
   const updatedProfile = sortExperiencePositions(readEditorValues());
 
   try {

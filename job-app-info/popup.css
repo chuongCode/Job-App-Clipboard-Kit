@@ -66,7 +66,8 @@ h1 {
 .copy-button:focus-visible,
 .secondary-button:focus-visible,
 .primary-button:focus-visible,
-.profile-input:focus-visible {
+.profile-input:focus-visible,
+.date-year-input:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 1px;
 }
@@ -263,6 +264,22 @@ h1 {
   background: #fff;
   line-height: 1.35;
   resize: vertical;
+}
+
+.date-edit-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-year-input {
+  width: 58px;
+  padding: 5px 7px;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  color: inherit;
+  background: #fff;
+  text-align: center;
 }
 
 .add-button {
