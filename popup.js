@@ -553,6 +553,19 @@ function sortExperiencePositions(profile) {
   return profile;
 }
 
+function normalizeLinkValue(value) {
+  const trimmedValue = value.trim();
+  if (!trimmedValue || /^https?:\/\//i.test(trimmedValue)) return trimmedValue;
+  return `https://${trimmedValue}`;
+}
+
+function normalizeLinks(profile) {
+  profile.links.fields.forEach((field) => {
+    field.value = normalizeLinkValue(field.value);
+  });
+  return profile;
+}
+
 function mergeEducationFields(defaultFields, savedFields) {
   const savedDegree = savedFields.find((field) => field.label === "Degree")?.value || "";
   const degreeParts = savedDegree.split(",");
@@ -626,12 +639,12 @@ function mergeWithDefaults(savedProfile) {
     }
   });
 
-  return sortExperiencePositions(mergedProfile);
+  return normalizeLinks(sortExperiencePositions(mergedProfile));
 }
 
 async function saveSection() {
   if (!dateInputsAreValid()) return;
-  const updatedProfile = sortExperiencePositions(readEditorValues());
+  const updatedProfile = normalizeLinks(sortExperiencePositions(readEditorValues()));
 
   try {
     await browser.storage.local.set({ [STORAGE_KEY]: updatedProfile });
