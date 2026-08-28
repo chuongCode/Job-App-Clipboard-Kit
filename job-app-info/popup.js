@@ -298,12 +298,12 @@ function renderProfile() {
       });
     });
 
-    if (isEditing && section.positions) {
+    if (isEditing && (section.positions || sectionKey === "links")) {
       const addButton = document.createElement("button");
       addButton.className = "add-button";
       addButton.type = "button";
       addButton.textContent = "Add +";
-      addButton.addEventListener("click", addPosition);
+      addButton.addEventListener("click", section.positions ? addPosition : addLink);
       sectionElement.append(addButton);
     }
 
@@ -377,6 +377,14 @@ function addPosition() {
   renderProfile();
   const inputs = profileElement.querySelectorAll('textarea[data-section="experience"]');
   inputs[inputs.length - 6]?.focus();
+}
+
+function addLink() {
+  editingProfile = readEditorValues();
+  editingProfile.links.fields.push({ label: "Additional", value: "" });
+  renderProfile();
+  const inputs = profileElement.querySelectorAll('textarea[data-section="links"]');
+  inputs[inputs.length - 1]?.focus();
 }
 
 function endDateValue(position) {
@@ -455,6 +463,12 @@ function mergeWithDefaults(savedProfile) {
         field.value = savedField.value;
       }
     });
+
+    if (sectionKey === "links") {
+      savedFields
+        .filter((field) => field.label === "Additional" && typeof field.value === "string")
+        .forEach((field) => section.fields.push({ label: "Additional", value: field.value }));
+    }
   });
 
   return sortExperiencePositions(mergedProfile);
