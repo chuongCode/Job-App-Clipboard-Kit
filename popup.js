@@ -227,7 +227,7 @@ function appendNameField(sectionElement, field) {
   const fullName = field.value.trim();
   const row = document.createElement("div");
   row.className = "profile-row";
-  const label = createRowLabel("Name", fullName || null, "Copy full name");
+  const label = createRowLabel("Full Name", fullName || null, "Copy full name");
 
   if (!fullName) {
     const emptyValue = document.createElement("span");
