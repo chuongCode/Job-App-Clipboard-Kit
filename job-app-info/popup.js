@@ -43,8 +43,7 @@ const DEFAULT_PROFILE = {
       { label: "School", value: "University of Rochester" },
       { label: "Degree", value: "Bachelor's" },
       { label: "Discipline", value: "Computer Science" },
-      { label: "Start Year", value: "2021" },
-      { label: "End Year", value: "2025" }
+      { label: "Date", value: "2021 - 2025" }
     ]
   }
 };
@@ -161,6 +160,49 @@ function appendCopyField(sectionElement, field) {
   sectionElement.append(row);
 }
 
+function appendDateField(sectionElement, field) {
+  const years = field.value.match(/\b\d{4}\b/g);
+  if (!years || years.length < 2) {
+    appendCopyField(sectionElement, field);
+    return;
+  }
+
+  const row = document.createElement("div");
+  row.className = "profile-row";
+
+  const label = document.createElement("span");
+  label.className = "row-label";
+  label.textContent = field.label;
+
+  const dateRange = document.createElement("div");
+  dateRange.className = "date-range";
+
+  years.slice(0, 2).forEach((year, index) => {
+    if (index > 0) {
+      const separator = document.createElement("span");
+      separator.className = "date-separator";
+      separator.textContent = "–";
+      dateRange.append(separator);
+    }
+
+    const yearButton = document.createElement("button");
+    yearButton.className = "date-part";
+    yearButton.type = "button";
+    yearButton.textContent = year;
+    yearButton.title = `Copy ${year}`;
+    yearButton.addEventListener("click", () => copyValue(year, dateRange));
+    dateRange.append(yearButton);
+  });
+
+  const copyState = document.createElement("span");
+  copyState.className = "copy-state";
+  copyState.setAttribute("aria-live", "polite");
+  dateRange.append(copyState);
+
+  row.append(label, dateRange);
+  sectionElement.append(row);
+}
+
 function appendEditField(sectionElement, sectionKey, section, field, fieldIndex, groupIndex) {
   const row = document.createElement("label");
   row.className = "edit-row";
@@ -205,6 +247,8 @@ function renderProfile() {
       group.fields.forEach((field, fieldIndex) => {
         if (isEditing) {
           appendEditField(sectionElement, sectionKey, section, field, fieldIndex, groupIndex);
+        } else if (sectionKey === "education" && field.label === "Date") {
+          appendDateField(sectionElement, field);
         } else {
           appendCopyField(sectionElement, field);
         }
@@ -292,8 +336,9 @@ function sortExperiencePositions(profile) {
 function mergeEducationFields(defaultFields, savedFields) {
   const savedDegree = savedFields.find((field) => field.label === "Degree")?.value || "";
   const degreeParts = savedDegree.split(",");
-  const savedDate = savedFields.find((field) => ["Date", "Years"].includes(field.label))?.value || "";
-  const yearMatches = savedDate.match(/\b\d{4}\b/g) || [];
+  const savedDate = savedFields.find((field) => ["Date", "Years"].includes(field.label))?.value;
+  const startYear = savedFields.find((field) => field.label === "Start Year")?.value;
+  const endYear = savedFields.find((field) => field.label === "End Year")?.value;
 
   defaultFields.forEach((field) => {
     const exactField = savedFields.find((candidate) => candidate.label === field.label);
@@ -302,10 +347,8 @@ function mergeEducationFields(defaultFields, savedFields) {
       field.value = degreeParts[0].trim();
     } else if (field.label === "Discipline") {
       field.value = exactField?.value || degreeParts.slice(1).join(",").trim() || field.value;
-    } else if (field.label === "Start Year") {
-      field.value = exactField?.value || yearMatches[0] || field.value;
-    } else if (field.label === "End Year") {
-      field.value = exactField?.value || yearMatches[1] || field.value;
+    } else if (field.label === "Date") {
+      field.value = savedDate || (startYear && endYear ? `${startYear} - ${endYear}` : field.value);
     } else if (exactField && typeof exactField.value === "string") {
       field.value = exactField.value;
     }
