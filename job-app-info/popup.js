@@ -284,6 +284,7 @@ function appendDateEditField(sectionElement, sectionKey, field, fieldIndex) {
 }
 
 function renderProfile() {
+  const previousScrollTop = profileElement.scrollTop;
   profileElement.replaceChildren();
 
   Object.entries(currentProfile).forEach(([sectionKey, savedSection]) => {
@@ -316,17 +317,24 @@ function renderProfile() {
       });
     });
 
-    if (isEditing && (section.positions || sectionKey === "links")) {
-      const addButton = document.createElement("button");
+    if (section.positions || sectionKey === "links") {
+      const addButton = document.createElement(isEditing ? "button" : "div");
       addButton.className = "add-button";
-      addButton.type = "button";
       addButton.textContent = "Add +";
-      addButton.addEventListener("click", section.positions ? addPosition : addLink);
+      if (isEditing) {
+        addButton.type = "button";
+        addButton.addEventListener("click", section.positions ? addPosition : addLink);
+      } else {
+        addButton.classList.add("add-button-placeholder");
+        addButton.setAttribute("aria-hidden", "true");
+      }
       sectionElement.append(addButton);
     }
 
     profileElement.append(sectionElement);
   });
+
+  profileElement.scrollTop = previousScrollTop;
 }
 
 function beginEditing(sectionKey) {

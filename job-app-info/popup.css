@@ -157,6 +157,7 @@ h1 {
 .copy-button {
   display: flex;
   min-width: 0;
+  height: 30px;
   flex: 1;
   align-items: center;
   padding: 5px 6px;
@@ -183,6 +184,7 @@ h1 {
 .date-range {
   display: flex;
   min-width: 0;
+  height: 30px;
   flex: 1;
   align-items: center;
   gap: 3px;
@@ -245,28 +247,31 @@ h1 {
 .row-value {
   min-width: 0;
   flex: 1;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .edit-row {
   display: grid;
   grid-template-columns: 78px 1fr;
   align-items: center;
-  min-height: 34px;
-  padding: 3px 6px;
+  height: 34px;
+  padding: 2px 6px;
 }
 
 .profile-input {
   width: 100%;
+  height: 30px;
   min-width: 0;
-  padding: 5px 7px;
+  padding: 4px 7px;
   border: 1px solid #d1d5db;
   border-radius: 5px;
   color: inherit;
   background: #fff;
   line-height: 1.35;
-  resize: vertical;
+  overflow-y: auto;
+  resize: none;
 }
 
 .removable-label {
@@ -315,6 +320,7 @@ h1 {
 
 .date-year-input {
   width: 58px;
+  height: 30px;
   padding: 5px 7px;
   border: 1px solid #d1d5db;
   border-radius: 5px;
@@ -325,13 +331,19 @@ h1 {
 
 .add-button {
   width: 100%;
+  height: 30px;
   margin-top: 6px;
-  padding: 6px;
+  padding: 4px 6px;
   border: 1px dashed #cbd5e1;
   border-radius: 5px;
   color: #2563eb;
   background: transparent;
   cursor: pointer;
+}
+
+.add-button-placeholder {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .add-button:hover {
