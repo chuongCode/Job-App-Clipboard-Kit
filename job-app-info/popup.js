@@ -51,7 +51,6 @@ const DEFAULT_PROFILE = {
 
 const profileElement = document.querySelector("#profile");
 const statusElement = document.querySelector("#status");
-const modeHint = document.querySelector("#mode-hint");
 const STORAGE_KEY = "profile";
 let currentProfile;
 let editingProfile;
@@ -228,7 +227,6 @@ function renderProfile() {
 function beginEditing(sectionKey) {
   editingSectionKey = sectionKey;
   editingProfile = JSON.parse(JSON.stringify(currentProfile));
-  modeHint.textContent = `Editing ${currentProfile[sectionKey].title} · Enter saves · Shift+Enter adds a line`;
   renderProfile();
   profileElement.querySelector(`textarea[data-section="${sectionKey}"]`)?.focus();
 }
@@ -236,7 +234,6 @@ function beginEditing(sectionKey) {
 function cancelEditing() {
   editingSectionKey = null;
   editingProfile = null;
-  modeHint.textContent = "Click any value to copy";
   renderProfile();
 }
 
@@ -368,7 +365,6 @@ async function saveSection() {
     currentProfile = updatedProfile;
     editingSectionKey = null;
     editingProfile = null;
-    modeHint.textContent = "Click any value to copy";
     renderProfile();
     showStatus("Saved");
   } catch (error) {
