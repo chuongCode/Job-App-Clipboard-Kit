@@ -3,13 +3,17 @@
   "name": "Job App Info",
   "version": "0.1.0",
   "description": "Quickly copy frequently used job application information.",
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
   "permissions": [
     "storage",
     "clipboardWrite"
   ],
   "action": {
     "default_title": "Job App Info",
-    "default_popup": "popup.html",
     "default_icon": {
       "48": "icons/icon-48.png",
       "96": "icons/icon-96.png"

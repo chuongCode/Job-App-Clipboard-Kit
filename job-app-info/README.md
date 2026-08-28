@@ -1,6 +1,6 @@
 # Job App Info
 
-Job App Info is a small, local-only Firefox extension for copying frequently used job application details. Open the toolbar popup and click any value to copy only that value. Use **Edit** to update the values in place; **Save** stores them in Firefox's local extension storage so they remain available after the popup or browser closes.
+Job App Info is a small, local-only Firefox extension for copying frequently used job application details. Open the profile window from the toolbar and click any value to copy only that value. Use a section's pencil to update its values; **Save** stores them in Firefox's local extension storage so they remain available after the window or browser closes.
 
 The extension has no backend, analytics, external requests, content scripts, or third-party dependencies.
 
@@ -9,6 +9,7 @@ The extension has no backend, analytics, external requests, content scripts, or 
 ```text
 job-app-info/
 ├── manifest.json
+├── background.js
 ├── popup.html
 ├── popup.css
 ├── popup.js
@@ -25,12 +26,13 @@ job-app-info/
 3. Click **Load Temporary Add-on**.
 4. Select this folder's `manifest.json` file.
 5. Pin **Job App Info** to the toolbar if you want it to remain visible.
+6. Click the toolbar icon to open the profile window. It stays open when focus moves elsewhere; click the toolbar icon again or use the X in the window to close it.
 
 Temporary extensions are removed when Firefox exits.
 
 ## Reload changes during development
 
-After changing a source file, return to `about:debugging` → **This Firefox**, find **Job App Info**, and click **Reload**. Close and reopen the popup to see the update. If you change only saved values through the popup, no reload is needed.
+After changing a source file, return to `about:debugging` → **This Firefox**, find **Job App Info**, and click **Reload**. Close and reopen the profile window to see the update. If you change only saved values through the window, no reload is needed.
 
 ## Edit profile data
 
