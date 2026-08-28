@@ -34,7 +34,7 @@ After changing a source file, return to `about:debugging` → **This Firefox**, 
 
 ## Edit profile data
 
-For everyday changes, click **Edit** in the popup, update the fields, and click **Save**. Use **Add +** in the Experience section to add another position. Experience positions are sorted by their latest end date when loaded or saved; `Present`, `Current`, and `Now` are treated as ongoing positions and appear first. ISO-style dates such as `2025-06` are recommended. The saved profile is kept locally by `browser.storage.local`.
+For everyday changes, click the pencil beside a section heading, update that section's fields, and click **Save**. Pressing Enter also saves the active section; use Shift+Enter to insert a newline. Use **Add +** in the Experience section to add another position. Experience positions are sorted by their latest end date when loaded or saved; `Present`, `Current`, and `Now` are treated as ongoing positions and appear first. ISO-style dates such as `2025-06` are recommended. The saved profile is kept locally by `browser.storage.local`.
 
 The initial demo profile is the clearly marked `DEFAULT_PROFILE` object near the top of `popup.js`. Edit that object to change the defaults. Existing saved values are preserved, while newly added fields are merged into the saved profile the next time the popup opens. To replace an existing saved value with its updated default, edit it in the popup or clear the extension's local storage.
 

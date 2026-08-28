@@ -49,14 +49,11 @@ const DEFAULT_PROFILE = {
 
 const profileElement = document.querySelector("#profile");
 const statusElement = document.querySelector("#status");
-const editButton = document.querySelector("#edit-button");
-const editActions = document.querySelector("#edit-actions");
-const saveButton = document.querySelector("#save-button");
-const cancelButton = document.querySelector("#cancel-button");
 const modeHint = document.querySelector("#mode-hint");
 const STORAGE_KEY = "profile";
 let currentProfile;
 let editingProfile;
+let editingSectionKey = null;
 let statusTimer;
 
 function showStatus(message, isError = false) {
@@ -83,71 +80,116 @@ async function copyValue(value, row) {
   }
 }
 
-function renderProfile(profile) {
-  profileElement.replaceChildren();
+function createPencilIcon() {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
 
-  Object.values(profile).forEach((section) => {
-    const sectionElement = document.createElement("section");
-    sectionElement.className = "section";
-
-    const heading = document.createElement("h2");
-    heading.className = "section-title";
-    heading.textContent = section.title;
-    sectionElement.append(heading);
-
-    const groups = section.positions || [{ fields: section.fields }];
-
-    groups.forEach((group, groupIndex) => {
-      if (section.positions) {
-        const positionTitle = document.createElement("h3");
-        positionTitle.className = "position-title";
-        positionTitle.textContent = `Position ${groupIndex + 1}`;
-        sectionElement.append(positionTitle);
-      }
-
-      group.fields.forEach((field) => {
-        const row = document.createElement("div");
-        row.className = "profile-row";
-
-        const label = document.createElement("span");
-        label.className = "row-label";
-        label.textContent = field.label;
-
-        const copyButton = document.createElement("button");
-        copyButton.className = "copy-button";
-        copyButton.type = "button";
-        copyButton.title = `Copy ${field.label}`;
-
-        const value = document.createElement("span");
-        value.className = "row-value";
-        value.textContent = field.value;
-
-        const copyState = document.createElement("span");
-        copyState.className = "copy-state";
-        copyState.setAttribute("aria-live", "polite");
-
-        copyButton.append(value, copyState);
-        copyButton.addEventListener("click", () => copyValue(field.value, copyButton));
-        row.append(label, copyButton);
-        sectionElement.append(row);
-      });
-    });
-
-    profileElement.append(sectionElement);
-  });
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z");
+  svg.append(path);
+  return svg;
 }
 
-function renderEditor(profile) {
+function createSectionHeader(sectionKey, section, isEditing) {
+  const header = document.createElement("div");
+  header.className = "section-heading";
+
+  const heading = document.createElement("h2");
+  heading.className = "section-title";
+  heading.textContent = section.title;
+  header.append(heading);
+
+  if (isEditing) {
+    const actions = document.createElement("div");
+    actions.className = "section-actions";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.className = "secondary-button compact-button";
+    cancelButton.type = "button";
+    cancelButton.textContent = "Cancel";
+    cancelButton.addEventListener("click", cancelEditing);
+
+    const saveButton = document.createElement("button");
+    saveButton.className = "primary-button compact-button";
+    saveButton.type = "button";
+    saveButton.textContent = "Save";
+    saveButton.addEventListener("click", saveSection);
+
+    actions.append(cancelButton, saveButton);
+    header.append(actions);
+  } else {
+    const editButton = document.createElement("button");
+    editButton.className = "section-edit-button";
+    editButton.type = "button";
+    editButton.title = `Edit ${section.title}`;
+    editButton.setAttribute("aria-label", `Edit ${section.title}`);
+    editButton.disabled = editingSectionKey !== null;
+    editButton.append(createPencilIcon());
+    editButton.addEventListener("click", () => beginEditing(sectionKey));
+    header.append(editButton);
+  }
+
+  return header;
+}
+
+function appendCopyField(sectionElement, field) {
+  const row = document.createElement("div");
+  row.className = "profile-row";
+
+  const label = document.createElement("span");
+  label.className = "row-label";
+  label.textContent = field.label;
+
+  const copyButton = document.createElement("button");
+  copyButton.className = "copy-button";
+  copyButton.type = "button";
+  copyButton.title = `Copy ${field.label}`;
+
+  const value = document.createElement("span");
+  value.className = "row-value";
+  value.textContent = field.value;
+
+  const copyState = document.createElement("span");
+  copyState.className = "copy-state";
+  copyState.setAttribute("aria-live", "polite");
+
+  copyButton.append(value, copyState);
+  copyButton.addEventListener("click", () => copyValue(field.value, copyButton));
+  row.append(label, copyButton);
+  sectionElement.append(row);
+}
+
+function appendEditField(sectionElement, sectionKey, section, field, fieldIndex, groupIndex) {
+  const row = document.createElement("label");
+  row.className = "edit-row";
+
+  const label = document.createElement("span");
+  label.className = "row-label";
+  label.textContent = field.label;
+
+  const input = document.createElement("textarea");
+  input.className = "profile-input";
+  input.rows = field.label === "Description" ? 3 : 1;
+  input.value = field.value;
+  input.dataset.section = sectionKey;
+  input.dataset.fieldIndex = String(fieldIndex);
+  if (section.positions) input.dataset.positionIndex = String(groupIndex);
+  input.addEventListener("keydown", handleEditorKeydown);
+
+  row.append(label, input);
+  sectionElement.append(row);
+}
+
+function renderProfile() {
   profileElement.replaceChildren();
 
-  Object.entries(profile).forEach(([sectionKey, section]) => {
+  Object.entries(currentProfile).forEach(([sectionKey, savedSection]) => {
+    const isEditing = sectionKey === editingSectionKey;
+    const section = isEditing ? editingProfile[sectionKey] : savedSection;
     const sectionElement = document.createElement("section");
     sectionElement.className = "section";
-
-    const heading = document.createElement("h2");
-    heading.className = "section-title";
-    heading.textContent = section.title;
-    sectionElement.append(heading);
+    sectionElement.append(createSectionHeader(sectionKey, section, isEditing));
 
     const groups = section.positions || [{ fields: section.fields }];
 
@@ -160,27 +202,15 @@ function renderEditor(profile) {
       }
 
       group.fields.forEach((field, fieldIndex) => {
-        const row = document.createElement("label");
-        row.className = "edit-row";
-
-        const label = document.createElement("span");
-        label.className = "row-label";
-        label.textContent = field.label;
-
-        const input = document.createElement("input");
-        input.className = "profile-input";
-        input.type = "text";
-        input.value = field.value;
-        input.dataset.section = sectionKey;
-        input.dataset.fieldIndex = String(fieldIndex);
-        if (section.positions) input.dataset.positionIndex = String(groupIndex);
-
-        row.append(label, input);
-        sectionElement.append(row);
+        if (isEditing) {
+          appendEditField(sectionElement, sectionKey, section, field, fieldIndex, groupIndex);
+        } else {
+          appendCopyField(sectionElement, field);
+        }
       });
     });
 
-    if (section.positions) {
+    if (isEditing && section.positions) {
       const addButton = document.createElement("button");
       addButton.className = "add-button";
       addButton.type = "button";
@@ -193,19 +223,25 @@ function renderEditor(profile) {
   });
 }
 
-function setEditing(isEditing) {
-  editButton.hidden = isEditing;
-  editActions.hidden = !isEditing;
-  modeHint.textContent = isEditing ? "Update your saved profile" : "Click any value to copy";
+function beginEditing(sectionKey) {
+  editingSectionKey = sectionKey;
+  editingProfile = JSON.parse(JSON.stringify(currentProfile));
+  modeHint.textContent = `Editing ${currentProfile[sectionKey].title} · Enter saves · Shift+Enter adds a line`;
+  renderProfile();
+  profileElement.querySelector(`textarea[data-section="${sectionKey}"]`)?.focus();
+}
 
-  if (isEditing) {
-    editingProfile = JSON.parse(JSON.stringify(currentProfile));
-    renderEditor(editingProfile);
-    profileElement.querySelector("input")?.focus();
-  } else {
-    editingProfile = null;
-    renderProfile(currentProfile);
-  }
+function cancelEditing() {
+  editingSectionKey = null;
+  editingProfile = null;
+  modeHint.textContent = "Click any value to copy";
+  renderProfile();
+}
+
+function handleEditorKeydown(event) {
+  if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+  event.preventDefault();
+  saveSection();
 }
 
 function readEditorValues() {
@@ -235,11 +271,9 @@ function addPosition() {
       { label: "Description", value: "" }
     ]
   });
-  renderEditor(editingProfile);
-  const newPosition = profileElement.querySelector(
-    ".section:nth-of-type(3) .position-title:last-of-type + .edit-row input"
-  );
-  newPosition?.focus();
+  renderProfile();
+  const inputs = profileElement.querySelectorAll('textarea[data-section="experience"]');
+  inputs[inputs.length - 6]?.focus();
 }
 
 function endDateValue(position) {
@@ -296,13 +330,16 @@ function mergeWithDefaults(savedProfile) {
   return sortExperiencePositions(mergedProfile);
 }
 
-async function saveProfile() {
+async function saveSection() {
   const updatedProfile = sortExperiencePositions(readEditorValues());
 
   try {
     await browser.storage.local.set({ [STORAGE_KEY]: updatedProfile });
     currentProfile = updatedProfile;
-    setEditing(false);
+    editingSectionKey = null;
+    editingProfile = null;
+    modeHint.textContent = "Click any value to copy";
+    renderProfile();
     showStatus("Saved");
   } catch (error) {
     console.error("Could not save profile:", error);
@@ -327,11 +364,7 @@ async function initialize() {
     showStatus("Using default profile", true);
   }
 
-  renderProfile(currentProfile);
+  renderProfile();
 }
-
-editButton.addEventListener("click", () => setEditing(true));
-cancelButton.addEventListener("click", () => setEditing(false));
-saveButton.addEventListener("click", saveProfile);
 
 initialize();
