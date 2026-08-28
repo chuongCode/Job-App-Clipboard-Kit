@@ -1,14 +1,17 @@
 # Job App Info
 
-Job App Info is a small, local-only Firefox extension for copying frequently used job application details. Open the toolbar popup and click any value to copy only that value. Use a section's pencil to update its values; **Save** stores them in Firefox's local extension storage so they remain available after the popup or browser closes.
+Job App Info is a small, local-only Firefox extension for copying frequently used job application details. Click the toolbar icon to toggle a floating profile panel in the current webpage, then click any value to copy only that value. The panel remains open while you interact with the page. Use a section's pencil to update its values; **Save** stores them in Firefox's local extension storage so they remain available after the panel or browser closes.
 
-The extension has no backend, analytics, external requests, content scripts, or third-party dependencies.
+The extension has no backend, analytics, external requests, or third-party dependencies. Its small content script only creates and toggles the floating panel; it does not inspect forms or page data.
 
 ## File structure
 
 ```text
 job-app-info/
 ├── manifest.json
+├── background.js
+├── content-panel.js
+├── content-panel.css
 ├── popup.html
 ├── popup.css
 ├── popup.js
@@ -25,12 +28,15 @@ job-app-info/
 3. Click **Load Temporary Add-on**.
 4. Select this folder's `manifest.json` file.
 5. Pin **Job App Info** to the toolbar if you want it to remain visible.
+6. Open a normal webpage and click the toolbar icon to show or hide the floating panel. The X also closes it.
 
 Temporary extensions are removed when Firefox exits.
 
+The panel can be injected into regular `http`, `https`, and permitted `file` pages. Firefox blocks extensions from injecting into internal pages such as `about:debugging`, the built-in PDF viewer, and other protected browser pages. Navigating or reloading the tab removes the panel; click the toolbar icon to inject it again.
+
 ## Reload changes during development
 
-After changing a source file, return to `about:debugging` → **This Firefox**, find **Job App Info**, and click **Reload**. Close and reopen the popup to see the update. If you change only saved values through the popup, no reload is needed.
+After changing a source file, return to `about:debugging` → **This Firefox**, find **Job App Info**, and click **Reload**. Click the toolbar icon on a webpage to inject the updated panel. If you change only saved values through the panel, no reload is needed.
 
 ## Edit profile data
 
@@ -42,6 +48,8 @@ The initial demo profile is the clearly marked `DEFAULT_PROFILE` object near the
 
 - `clipboardWrite` allows a clicked value to be written to the clipboard.
 - `storage` allows edited profile data to persist locally.
+- `activeTab` grants temporary access only to the tab where you click the toolbar icon.
+- `scripting` injects the floating panel into that active tab.
 
 ## Permanent installation
 
