@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Job App Info</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>Job App Info</h1>
+        <p id="mode-hint">Click any value to copy</p>
+      </div>
+      <button id="edit-button" class="text-button" type="button">Edit</button>
+    </header>
+
+    <main id="profile" aria-live="polite"></main>
+
+    <footer id="edit-actions" class="edit-actions" hidden>
+      <button id="cancel-button" class="secondary-button" type="button">Cancel</button>
+      <button id="save-button" class="primary-button" type="button">Save</button>
+    </footer>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>
