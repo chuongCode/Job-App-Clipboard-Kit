@@ -1,8 +1,17 @@
 :root {
   color-scheme: light;
+  --interaction-blue: #1d4ed8;
+  --interaction-blue-dark: #1e3a8a;
+  --interaction-blue-soft: #eff6ff;
+  --interaction-blue-flash: #bfdbfe;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #1f2937;
   background: #fff;
+}
+
+::selection {
+  color: var(--interaction-blue-dark);
+  background: var(--interaction-blue-flash);
 }
 
 * {
@@ -157,12 +166,14 @@ h1 {
 }
 
 .copy-button:hover {
-  background: #f3f4f6;
+  color: var(--interaction-blue);
+  background: var(--interaction-blue-soft);
 }
 
+.copy-button:active,
 .copy-button.copied {
-  color: #111827;
-  background: #d1d5db;
+  color: var(--interaction-blue-dark);
+  background: var(--interaction-blue-flash);
 }
 
 .date-range {
@@ -185,13 +196,14 @@ h1 {
 }
 
 .date-part:hover {
-  color: #1d4ed8;
-  background: #eff6ff;
+  color: var(--interaction-blue);
+  background: var(--interaction-blue-soft);
 }
 
+.date-part:active,
 .date-part.copied {
-  color: #1e3a8a;
-  background: #bfdbfe;
+  color: var(--interaction-blue-dark);
+  background: var(--interaction-blue-flash);
 }
 
 .date-part:focus-visible {
