@@ -220,6 +220,23 @@ h1 {
   padding: 2px;
 }
 
+.name-parts {
+  display: flex;
+  min-width: 0;
+  height: 30px;
+  flex: 1;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+}
+
+.name-part {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .date-part {
   padding: 3px 4px;
   border: 0;
@@ -346,6 +363,30 @@ h1 {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.name-edit-fields {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.name-part-input {
+  width: 100%;
+  height: 30px;
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  color: inherit;
+  background: #fff;
+}
+
+.name-part-input:focus-visible {
+  border-color: #2563eb;
+  outline: 2px solid #bfdbfe;
+  outline-offset: 0;
 }
 
 .date-year-input {

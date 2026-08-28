@@ -159,30 +159,42 @@ function formatFullAddress(section) {
   return [addressAndLocation, valueFor("ZIP")].filter(Boolean).join(" ");
 }
 
+function createRowLabel(text, valueToCopy = null, copyTitle = "") {
+  const label = document.createElement("span");
+  label.className = "row-label";
+
+  if (valueToCopy === null) {
+    label.textContent = text;
+    return label;
+  }
+
+  const target = document.createElement("span");
+  target.className = "label-copy-target";
+  target.textContent = text;
+  target.tabIndex = 0;
+  target.setAttribute("role", "button");
+  target.title = copyTitle;
+  target.setAttribute("aria-label", copyTitle);
+  target.addEventListener("click", () => copyValue(valueToCopy, target));
+  target.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    copyValue(valueToCopy, target);
+  });
+  label.append(target);
+  return label;
+}
+
+function splitName(fullName) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  return { first: parts.shift() || "", last: parts.join(" ") };
+}
+
 function appendCopyField(sectionElement, field, labelCopyValue = null) {
   const row = document.createElement("div");
   row.className = "profile-row";
 
-  const label = document.createElement("span");
-  label.className = "row-label";
-  if (labelCopyValue !== null) {
-    const labelTarget = document.createElement("span");
-    labelTarget.className = "label-copy-target";
-    labelTarget.textContent = field.label;
-    labelTarget.tabIndex = 0;
-    labelTarget.setAttribute("role", "button");
-    labelTarget.title = "Copy full address";
-    labelTarget.setAttribute("aria-label", "Copy full address");
-    labelTarget.addEventListener("click", () => copyValue(labelCopyValue, labelTarget));
-    labelTarget.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      copyValue(labelCopyValue, labelTarget);
-    });
-    label.append(labelTarget);
-  } else {
-    label.textContent = field.label;
-  }
+  const label = createRowLabel(field.label, labelCopyValue, "Copy full address");
 
   if (field.value.trim()) {
     const copyButton = document.createElement("button");
@@ -202,6 +214,38 @@ function appendCopyField(sectionElement, field, labelCopyValue = null) {
     emptyValue.className = "empty-value";
     row.append(label, emptyValue);
   }
+  sectionElement.append(row);
+}
+
+function appendNameField(sectionElement, field) {
+  const fullName = field.value.trim();
+  const row = document.createElement("div");
+  row.className = "profile-row";
+  const label = createRowLabel("Name", fullName || null, "Copy full name");
+
+  if (!fullName) {
+    const emptyValue = document.createElement("span");
+    emptyValue.className = "empty-value";
+    row.append(label, emptyValue);
+    sectionElement.append(row);
+    return;
+  }
+
+  const nameParts = document.createElement("div");
+  nameParts.className = "name-parts";
+  const { first, last } = splitName(fullName);
+
+  [first, last].filter(Boolean).forEach((part) => {
+    const button = document.createElement("button");
+    button.className = "date-part name-part";
+    button.type = "button";
+    button.textContent = part;
+    button.title = `Copy ${part}`;
+    button.addEventListener("click", () => copyValue(part, button));
+    nameParts.append(button);
+  });
+
+  row.append(label, nameParts);
   sectionElement.append(row);
 }
 
@@ -326,6 +370,34 @@ function appendDateEditField(sectionElement, sectionKey, field, fieldIndex) {
   sectionElement.append(row);
 }
 
+function appendNameEditField(sectionElement, sectionKey, field, fieldIndex) {
+  const row = document.createElement("div");
+  row.className = "edit-row";
+  const label = document.createElement("span");
+  label.className = "row-label";
+  label.textContent = field.label;
+
+  const fields = document.createElement("div");
+  fields.className = "name-edit-fields";
+  fields.dataset.section = sectionKey;
+  fields.dataset.fieldIndex = String(fieldIndex);
+  const { first, last } = splitName(field.value);
+
+  [["First", first], ["Last", last]].forEach(([placeholder, value]) => {
+    const input = document.createElement("input");
+    input.className = "name-part-input";
+    input.type = "text";
+    input.placeholder = placeholder;
+    input.setAttribute("aria-label", placeholder);
+    input.value = value;
+    input.addEventListener("keydown", handleEditorKeydown);
+    fields.append(input);
+  });
+
+  row.append(label, fields);
+  sectionElement.append(row);
+}
+
 function renderProfile() {
   const previousScrollTop = profileElement.scrollTop;
   profileElement.replaceChildren();
@@ -348,10 +420,14 @@ function renderProfile() {
       }
 
       group.fields.forEach((field, fieldIndex) => {
-        if (isEditing && sectionKey === "education" && field.label === "Date") {
+        if (isEditing && sectionKey === "personal" && field.label === "Name") {
+          appendNameEditField(sectionElement, sectionKey, field, fieldIndex);
+        } else if (isEditing && sectionKey === "education" && field.label === "Date") {
           appendDateEditField(sectionElement, sectionKey, field, fieldIndex);
         } else if (isEditing) {
           appendEditField(sectionElement, sectionKey, section, field, fieldIndex, groupIndex);
+        } else if (sectionKey === "personal" && field.label === "Name") {
+          appendNameField(sectionElement, field);
         } else if (sectionKey === "education" && field.label === "Date") {
           appendDateField(sectionElement, field);
         } else {
@@ -373,7 +449,9 @@ function beginEditing(sectionKey) {
   editingSectionKey = sectionKey;
   editingProfile = JSON.parse(JSON.stringify(currentProfile));
   renderProfile();
-  profileElement.querySelector(`textarea[data-section="${sectionKey}"]`)?.focus();
+  profileElement.querySelector(
+    `.name-edit-fields[data-section="${sectionKey}"] .name-part-input, textarea[data-section="${sectionKey}"]`
+  )?.focus();
 }
 
 function cancelEditing() {
@@ -405,6 +483,13 @@ function readEditorValues() {
     const field = section.fields[Number(dateInputs.dataset.fieldIndex)];
     const years = dateInputs.querySelectorAll(".date-year-input");
     field.value = `${years[0].value} - ${years[1].value}`;
+  });
+
+  profileElement.querySelectorAll(".name-edit-fields").forEach((nameInputs) => {
+    const section = updatedProfile[nameInputs.dataset.section];
+    const field = section.fields[Number(nameInputs.dataset.fieldIndex)];
+    const parts = nameInputs.querySelectorAll(".name-part-input");
+    field.value = [parts[0].value.trim(), parts[1].value.trim()].filter(Boolean).join(" ");
   });
 
   return updatedProfile;
