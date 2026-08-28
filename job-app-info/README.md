@@ -36,7 +36,7 @@ After changing a source file, return to `about:debugging` → **This Firefox**, 
 
 For everyday changes, click **Edit** in the popup, update the fields, and click **Save**. The saved profile is kept locally by `browser.storage.local`.
 
-The initial demo profile is the clearly marked `DEFAULT_PROFILE` object near the top of `popup.js`. Edit that object to change the defaults used by a fresh installation. Existing saved data is intentionally not overwritten by later changes to the default object. To test new defaults after data has already been saved, remove and reload the temporary extension or clear its extension storage.
+The initial demo profile is the clearly marked `DEFAULT_PROFILE` object near the top of `popup.js`. Edit that object to change the defaults. Existing saved values are preserved, while newly added fields are merged into the saved profile the next time the popup opens. To replace an existing saved value with its updated default, edit it in the popup or clear the extension's local storage.
 
 ## Permissions
 

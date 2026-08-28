@@ -24,7 +24,11 @@ const DEFAULT_PROFILE = {
     fields: [
       { label: "Title", value: "Software Engineer" },
       { label: "Company", value: "Paycom Software, Inc" },
-      { label: "Location", value: "Oklahoma City, OK, USA" }
+      { label: "Location", value: "Oklahoma City, OK, USA" },
+      {
+        label: "Description",
+        value: "Built and maintained reliable software for customers and internal teams."
+      }
     ]
   },
   education: {
@@ -170,6 +174,24 @@ function readEditorValues() {
   return updatedProfile;
 }
 
+function mergeWithDefaults(savedProfile) {
+  const mergedProfile = JSON.parse(JSON.stringify(DEFAULT_PROFILE));
+
+  Object.entries(mergedProfile).forEach(([sectionKey, section]) => {
+    const savedFields = savedProfile?.[sectionKey]?.fields;
+    if (!Array.isArray(savedFields)) return;
+
+    section.fields.forEach((field) => {
+      const savedField = savedFields.find((candidate) => candidate.label === field.label);
+      if (savedField && typeof savedField.value === "string") {
+        field.value = savedField.value;
+      }
+    });
+  });
+
+  return mergedProfile;
+}
+
 async function saveProfile() {
   const updatedProfile = readEditorValues();
 
@@ -189,7 +211,8 @@ async function initialize() {
     const saved = await browser.storage.local.get(STORAGE_KEY);
 
     if (saved[STORAGE_KEY]) {
-      currentProfile = saved[STORAGE_KEY];
+      currentProfile = mergeWithDefaults(saved[STORAGE_KEY]);
+      await browser.storage.local.set({ [STORAGE_KEY]: currentProfile });
     } else {
       currentProfile = DEFAULT_PROFILE;
       await browser.storage.local.set({ [STORAGE_KEY]: DEFAULT_PROFILE });
