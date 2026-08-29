@@ -70,6 +70,8 @@ let announcementTimer;
 const copyTimers = new WeakMap();
 let draggedGroupIndex = null;
 
+document.addEventListener("keydown", handleEditorKeydown);
+
 function applyDarkMode(enabled) {
   document.documentElement.classList.toggle("dark-mode", enabled);
   darkModeToggle.checked = enabled;
@@ -455,7 +457,6 @@ function appendEditField(sectionElement, sectionKey, section, field, fieldIndex,
   input.dataset.section = sectionKey;
   input.dataset.fieldIndex = String(fieldIndex);
   if (section.positions || section.entries) input.dataset.positionIndex = String(groupIndex);
-  input.addEventListener("keydown", handleEditorKeydown);
   if (sectionKey === "education") {
     input.addEventListener("input", () => input.removeAttribute("aria-invalid"));
   }
@@ -516,7 +517,6 @@ function appendDateEditField(sectionElement, sectionKey, field, fieldIndex, grou
       input.value = input.value.replace(/\D/g, "").slice(0, 4);
       input.removeAttribute("aria-invalid");
     });
-    input.addEventListener("keydown", handleEditorKeydown);
     dateInputs.append(input);
   });
 
@@ -606,7 +606,6 @@ function appendExperienceDateEditField(sectionElement, field, fieldIndex, positi
     year.addEventListener("input", () => {
       year.value = year.value.replace(/\D/g, "").slice(0, 4);
     });
-    year.addEventListener("keydown", handleEditorKeydown);
 
     half.append(month, year);
     dateInputs.append(half);
@@ -636,7 +635,6 @@ function appendNameEditField(sectionElement, sectionKey, field, fieldIndex) {
     input.placeholder = placeholder;
     input.setAttribute("aria-label", placeholder);
     input.value = value;
-    input.addEventListener("keydown", handleEditorKeydown);
     fields.append(input);
   });
 
@@ -775,7 +773,7 @@ function cancelEditing() {
 }
 
 function handleEditorKeydown(event) {
-  if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+  if (editingSectionKey === null || event.key !== "Enter" || event.shiftKey || event.isComposing) return;
   event.preventDefault();
   saveSection();
 }
