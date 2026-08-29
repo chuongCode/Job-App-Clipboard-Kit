@@ -1,6 +1,6 @@
 # Job App Clipboard Kit
 
-Job App Clipboard Kit is a lightweight, local-only browser extension that keeps frequently used job application details within easy reach. Inspired by the functionality of Simplify Copilot's clipboard feature.
+Job App Clipboard Kit is a lightweight, local-only browser extension that keeps frequently used job application details within easy reach. Inspired by the functionality of Simplify Copilot's clipboard feature but tired of how it terribly slows down opening new tabs (and its awful new layout).
 
 Visit the [Job App Clipboard Kit website](https://chuongcode.github.io/Job-App-Clipboard-Kit/) for a visual look.
 
