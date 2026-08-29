@@ -6,6 +6,7 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "job-app-clipboard-kit@extensions.local",
+      "update_url": "https://chuongcode.github.io/Job-App-Clipboard-Kit/updates.json",
       "strict_min_version": "140.0",
       "data_collection_permissions": {
         "required": [
