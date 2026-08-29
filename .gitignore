@@ -2,6 +2,7 @@
 *.xpi
 !distribution/releases/*.xpi
 web-ext-artifacts/
+.local/
 
 # Local agent skills
 skills/
