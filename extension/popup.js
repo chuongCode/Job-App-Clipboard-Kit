@@ -889,9 +889,11 @@ function addPosition() {
       { label: "Description", value: "" }
     ]
   });
+  const positionIndex = editingProfile.experience.positions.length - 1;
   renderProfile();
-  const inputs = profileElement.querySelectorAll('textarea[data-section="experience"]');
-  inputs[inputs.length - 6]?.focus();
+  profileElement.querySelector(
+    `textarea[data-section="experience"][data-position-index="${positionIndex}"][data-field-index="0"]`
+  )?.focus();
 }
 
 function removePosition(positionIndex) {
@@ -913,9 +915,11 @@ function addEducation() {
       { label: "Date", value: " - " }
     ]
   });
+  const educationIndex = editingProfile.education.entries.length - 1;
   renderProfile();
-  const inputs = profileElement.querySelectorAll('textarea[data-section="education"]');
-  inputs[inputs.length - 3]?.focus();
+  profileElement.querySelector(
+    `textarea[data-section="education"][data-position-index="${educationIndex}"][data-field-index="0"]`
+  )?.focus();
 }
 
 function removeEducation(educationIndex) {
