@@ -1,0 +1,14 @@
+{
+  "date": "2026-08-29",
+  "framework": "vanilla HTML, CSS, and JavaScript",
+  "font_stack": "system sans-serif",
+  "palette": "Firefox blue with cool neutrals",
+  "motion": "motion-cut; no animation library",
+  "spacing": "ad hoc",
+  "preserve": [
+    "Firefox-blue identity",
+    "lightweight static implementation",
+    "install and source actions",
+    "local-storage trust message"
+  ]
+}

@@ -1,10 +1,11 @@
-name: Deploy extension distribution to GitHub Pages
+name: Deploy website and extension distribution to GitHub Pages
 
 on:
   push:
     branches:
       - main
     paths:
+      - "website/**"
       - "distribution/**"
       - ".github/workflows/deploy-distribution-pages.yml"
   workflow_dispatch:
@@ -29,10 +30,16 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
-      - name: Upload distribution directory
+      - name: Assemble static site
+        run: |
+          mkdir _site
+          cp -R website/. _site/
+          cp distribution/updates.json _site/updates.json
+          cp -R distribution/releases _site/releases
+      - name: Upload website and distribution
         uses: actions/upload-pages-artifact@v4
         with:
-          path: distribution
+          path: _site
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
