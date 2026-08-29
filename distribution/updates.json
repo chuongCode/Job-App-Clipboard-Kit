@@ -3,8 +3,8 @@
     "job-app-clipboard-kit@extensions.local": {
       "updates": [
         {
-          "version": "0.1.0",
-          "update_link": "https://chuongcode.github.io/Job-App-Clipboard-Kit/releases/job-app-clipboard-kit-0.1.0.xpi"
+          "version": "0.1.1",
+          "update_link": "https://chuongcode.github.io/Job-App-Clipboard-Kit/releases/job-app-clipboard-kit-0.1.1.xpi"
         }
       ]
     }
