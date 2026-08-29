@@ -607,6 +607,19 @@ function appendExperienceDateEditField(sectionElement, field, fieldIndex, positi
       year.value = year.value.replace(/\D/g, "").slice(0, 4);
     });
 
+    half.addEventListener("paste", (event) => {
+      const pastedDate = parseMonthYear(event.clipboardData?.getData("text") || "");
+      const isPresent = pastedDate.month === "Present";
+      const isCompleteDate = pastedDate.month && /^\d{4}$/.test(pastedDate.year);
+      if ((!isCompleteDate && !isPresent) || (isPresent && index === 0)) return;
+
+      event.preventDefault();
+      month.value = pastedDate.month;
+      year.value = pastedDate.year;
+      month.dispatchEvent(new Event("change", { bubbles: true }));
+      year.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
     half.append(month, year);
     dateInputs.append(half);
   });
