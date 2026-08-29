@@ -579,6 +579,18 @@ function appendNameEditField(sectionElement, sectionKey, field, fieldIndex) {
     fields.append(input);
   });
 
+  fields.addEventListener("paste", (event) => {
+    const pastedName = event.clipboardData?.getData("text") || "";
+    const parts = pastedName.trim().split(/\s+/).filter(Boolean);
+    if (parts.length < 2) return;
+
+    event.preventDefault();
+    const inputs = fields.querySelectorAll(".name-part-input");
+    inputs[0].value = parts[0];
+    inputs[1].value = parts.slice(1).join(" ");
+    inputs.forEach((input) => input.dispatchEvent(new Event("input", { bubbles: true })));
+  });
+
   row.append(label, fields);
   sectionElement.append(row);
 }
