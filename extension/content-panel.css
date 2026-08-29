@@ -47,3 +47,19 @@
   outline: 2px solid #2563eb;
   outline-offset: 1px;
 }
+
+#job-app-clipboard-kit-panel.dark-mode,
+#job-app-clipboard-kit-panel.dark-mode iframe {
+  border-color: #334155;
+  background: #111827;
+}
+
+#job-app-clipboard-kit-panel.dark-mode .job-app-clipboard-kit-close {
+  color: #94a3b8;
+  background: #111827;
+}
+
+#job-app-clipboard-kit-panel.dark-mode .job-app-clipboard-kit-close:hover {
+  color: #f8fafc;
+  background: #1e293b;
+}

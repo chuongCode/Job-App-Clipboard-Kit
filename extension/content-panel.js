@@ -13,6 +13,21 @@
   panel.id = panelId;
   panel.setAttribute("aria-label", "Job App Clipboard Kit");
 
+  const applyDarkMode = (enabled) => panel.classList.toggle("dark-mode", enabled);
+  browser.storage.local.get("settings").then((saved) => {
+    applyDarkMode(saved.settings?.darkMode === true);
+  });
+  const handleSettingsChange = (changes, areaName) => {
+    if (!panel.isConnected) {
+      browser.storage.onChanged.removeListener(handleSettingsChange);
+      return;
+    }
+    if (areaName === "local" && changes.settings) {
+      applyDarkMode(changes.settings.newValue?.darkMode === true);
+    }
+  };
+  browser.storage.onChanged.addListener(handleSettingsChange);
+
   const frame = document.createElement("iframe");
   frame.src = browser.runtime.getURL("popup.html");
   frame.title = "Job App Clipboard Kit";

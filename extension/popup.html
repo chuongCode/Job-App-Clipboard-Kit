@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Job App Clipboard Kit</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>Job App Clipboard Kit</h1>
+        <p id="mode-hint">Click any value to copy</p>
+      </div>
+      <button id="settings-button" class="settings-button" type="button" title="Open settings" aria-label="Open settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"></path>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.83 2.83-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21h-4v-.08a1.7 1.7 0 0 0-1.03-1.56 1.7 1.7 0 0 0-1.88.34l-.06.06-2.83-2.83.06-.06A1.7 1.7 0 0 0 4.6 15 1.7 1.7 0 0 0 3.08 14H3v-4h.08A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.83-2.83.06.06A1.7 1.7 0 0 0 8.97 4.6 1.7 1.7 0 0 0 10 3.08V3h4v.08a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.88-.34l.06-.06 2.83 2.83-.06.06A1.7 1.7 0 0 0 19.4 9 1.7 1.7 0 0 0 20.92 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <main id="profile" aria-live="polite"></main>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
+      <form method="dialog">
+        <div class="settings-dialog-heading">
+          <h2 id="settings-title">Settings</h2>
+          <button class="dialog-close-button" type="submit" value="cancel" aria-label="Close settings">×</button>
+        </div>
+        <div class="settings-options">
+          <label class="settings-option" for="dark-mode-toggle">
+            <span class="settings-option-copy">
+              <h3>Dark mode</h3>
+              <p>Use a darker palette throughout the clipboard panel.</p>
+            </span>
+            <span class="toggle-switch">
+              <input id="dark-mode-toggle" type="checkbox" role="switch">
+              <span class="toggle-track" aria-hidden="true"></span>
+            </span>
+          </label>
+          <div class="settings-option">
+            <div class="settings-option-copy">
+              <h3>Export profile</h3>
+              <p>Download the currently saved profile as a JSON backup.</p>
+            </div>
+            <button id="export-button" class="secondary-button" type="button">Export</button>
+          </div>
+          <div class="settings-option">
+            <div class="settings-option-copy">
+              <h3>Import profile</h3>
+              <p>Choose a JSON backup to replace the saved profile.</p>
+            </div>
+            <button id="import-button" class="primary-button" type="button">Import</button>
+          </div>
+        </div>
+        <input id="import-file" type="file" accept="application/json,.json" hidden>
+      </form>
+    </dialog>
+    <script src="popup.js"></script>
+  </body>
+</html>

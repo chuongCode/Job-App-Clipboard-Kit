@@ -52,13 +52,39 @@ const EMPTY_PROFILE = {
 
 const profileElement = document.querySelector("#profile");
 const statusElement = document.querySelector("#status");
+const settingsButton = document.querySelector("#settings-button");
+const settingsDialog = document.querySelector("#settings-dialog");
+const exportButton = document.querySelector("#export-button");
+const importButton = document.querySelector("#import-button");
+const importFile = document.querySelector("#import-file");
+const darkModeToggle = document.querySelector("#dark-mode-toggle");
 const STORAGE_KEY = "profile";
+const SETTINGS_KEY = "settings";
+const PROFILE_FILE_FORMAT = "job-app-clipboard-kit-profile";
+const PROFILE_FILE_VERSION = 1;
 let currentProfile;
 let editingProfile;
 let editingSectionKey = null;
 let statusTimer;
 let announcementTimer;
 const copyTimers = new WeakMap();
+
+function applyDarkMode(enabled) {
+  document.documentElement.classList.toggle("dark-mode", enabled);
+  darkModeToggle.checked = enabled;
+}
+
+darkModeToggle.addEventListener("change", async () => {
+  const darkMode = darkModeToggle.checked;
+  applyDarkMode(darkMode);
+  try {
+    await browser.storage.local.set({ [SETTINGS_KEY]: { darkMode } });
+  } catch (error) {
+    console.error("Could not save appearance setting:", error);
+    applyDarkMode(!darkMode);
+    showStatus("Could not save setting", true);
+  }
+});
 
 function showStatus(message, isError = false) {
   window.clearTimeout(statusTimer);
@@ -69,6 +95,65 @@ function showStatus(message, isError = false) {
     statusElement.classList.remove("visible");
   }, 1000);
 }
+
+function exportProfile() {
+  const backup = {
+    format: PROFILE_FILE_FORMAT,
+    version: PROFILE_FILE_VERSION,
+    exportedAt: new Date().toISOString(),
+    profile: currentProfile
+  };
+  const blob = new Blob([`${JSON.stringify(backup, null, 2)}\n`], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `job-app-clipboard-kit-profile-${new Date().toISOString().slice(0, 10)}.json`;
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  settingsDialog.close();
+  showStatus("Profile exported");
+}
+
+async function importProfileFile(file) {
+  if (!file) return;
+  try {
+    if (file.size > 1024 * 1024) throw new Error("Profile file is too large");
+    const parsed = JSON.parse(await file.text());
+    if (parsed?.format !== PROFILE_FILE_FORMAT || parsed.version !== PROFILE_FILE_VERSION) {
+      throw new Error("Not a Job App Clipboard Kit profile file");
+    }
+    const importedProfile = parsed.profile;
+    const hasExpectedSections = Array.isArray(importedProfile?.personal?.fields)
+      && Array.isArray(importedProfile?.links?.fields)
+      && Array.isArray(importedProfile?.experience?.positions)
+      && Array.isArray(importedProfile?.education?.entries);
+    if (!hasExpectedSections) {
+      throw new Error("Invalid profile file");
+    }
+    if (!window.confirm("Replace the saved profile with the imported profile?")) return;
+    const normalizedProfile = mergeWithDefaults(importedProfile);
+    await browser.storage.local.set({ [STORAGE_KEY]: normalizedProfile });
+    currentProfile = normalizedProfile;
+    editingProfile = null;
+    editingSectionKey = null;
+    renderProfile();
+    settingsDialog.close();
+    showStatus("Profile imported");
+  } catch (error) {
+    console.error("Could not import profile:", error);
+    showStatus(error instanceof SyntaxError ? "Invalid JSON file" : error.message || "Import failed", true);
+  } finally {
+    importFile.value = "";
+  }
+}
+
+settingsButton.addEventListener("click", () => settingsDialog.showModal());
+settingsDialog.addEventListener("click", (event) => {
+  if (event.target === settingsDialog) settingsDialog.close();
+});
+exportButton.addEventListener("click", exportProfile);
+importButton.addEventListener("click", () => importFile.click());
+importFile.addEventListener("change", () => importProfileFile(importFile.files[0]));
 
 async function copyValue(value, target) {
   try {
@@ -877,7 +962,8 @@ async function saveSection() {
 
 async function initialize() {
   try {
-    const saved = await browser.storage.local.get(STORAGE_KEY);
+    const saved = await browser.storage.local.get([STORAGE_KEY, SETTINGS_KEY]);
+    applyDarkMode(saved[SETTINGS_KEY]?.darkMode === true);
 
     if (saved[STORAGE_KEY]) {
       currentProfile = mergeWithDefaults(saved[STORAGE_KEY]);
