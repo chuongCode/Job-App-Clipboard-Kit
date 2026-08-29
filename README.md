@@ -36,6 +36,8 @@ After changing a source file, return to `about:debugging` → **This Firefox**, 
 
 For everyday changes, click the pencil beside a section heading, update that section's fields, and click **Save**. Pressing Enter also saves the active section; use Shift+Enter to insert a newline.
 
+While editing Experience or Education, drag the six-dot handle beside an entry heading to rearrange the entries. The saved profile keeps that order.
+
 New installations start with an empty profile. Existing saved values are preserved, while newly added fields are merged into the saved profile the next time the panel opens. To start over, clear the extension's local storage.
 
 ## Import or export a profile

@@ -68,6 +68,7 @@ let editingSectionKey = null;
 let statusTimer;
 let announcementTimer;
 const copyTimers = new WeakMap();
+let draggedGroupIndex = null;
 
 function applyDarkMode(enabled) {
   document.documentElement.classList.toggle("dark-mode", enabled);
@@ -239,6 +240,66 @@ function createSectionHeader(sectionKey, section, isEditing) {
   }
 
   return header;
+}
+
+function reorderEditingGroup(sectionKey, fromIndex, toIndex) {
+  if (fromIndex === toIndex) return;
+  editingProfile = readEditorValues();
+  const collection = sectionKey === "experience"
+    ? editingProfile.experience.positions
+    : editingProfile.education.entries;
+  const [movedGroup] = collection.splice(fromIndex, 1);
+  collection.splice(toIndex, 0, movedGroup);
+  renderProfile();
+  profileElement.querySelector(`.drag-handle[data-group-index="${toIndex}"]`)?.focus();
+}
+
+function clearDropIndicators() {
+  profileElement.querySelectorAll(".profile-group").forEach((group) => {
+    group.classList.remove("drop-before", "drop-after");
+    delete group.dataset.dropSide;
+  });
+}
+
+function createDragHandle(sectionKey, groupIndex, itemName) {
+  const handle = document.createElement("button");
+  handle.className = "drag-handle";
+  handle.type = "button";
+  handle.draggable = true;
+  handle.dataset.groupIndex = String(groupIndex);
+  handle.title = `Drag to reorder ${itemName.toLowerCase()} ${groupIndex + 1}`;
+  handle.setAttribute("aria-label", `${itemName} ${groupIndex + 1}. Drag to reorder, or use Up and Down arrow keys.`);
+
+  const dots = document.createElement("span");
+  dots.className = "drag-handle-dots";
+  dots.setAttribute("aria-hidden", "true");
+  handle.append(dots);
+
+  handle.addEventListener("dragstart", (event) => {
+    editingProfile = readEditorValues();
+    draggedGroupIndex = groupIndex;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(groupIndex));
+    handle.closest(".profile-group")?.classList.add("is-dragging");
+  });
+  handle.addEventListener("dragend", () => {
+    draggedGroupIndex = null;
+    clearDropIndicators();
+    profileElement.querySelectorAll(".profile-group").forEach((group) => {
+      group.classList.remove("is-dragging");
+    });
+  });
+  handle.addEventListener("keydown", (event) => {
+    if (!["ArrowUp", "ArrowDown"].includes(event.key)) return;
+    const collection = sectionKey === "experience"
+      ? editingProfile.experience.positions
+      : editingProfile.education.entries;
+    const nextIndex = groupIndex + (event.key === "ArrowUp" ? -1 : 1);
+    if (nextIndex < 0 || nextIndex >= collection.length) return;
+    event.preventDefault();
+    reorderEditingGroup(sectionKey, groupIndex, nextIndex);
+  });
+  return handle;
 }
 
 function formatFullAddress(section) {
@@ -610,7 +671,39 @@ function renderProfile() {
     const groups = groupedEntries || [{ fields: section.fields }];
 
     groups.forEach((group, groupIndex) => {
+      const groupElement = groupedEntries ? document.createElement("div") : sectionElement;
       if (groupedEntries) {
+        groupElement.className = "profile-group";
+        groupElement.dataset.groupIndex = String(groupIndex);
+        if (isEditing) {
+          groupElement.addEventListener("dragover", (event) => {
+            if (draggedGroupIndex === null || draggedGroupIndex === groupIndex) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            const bounds = groupElement.getBoundingClientRect();
+            const dropSide = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
+            clearDropIndicators();
+            groupElement.dataset.dropSide = dropSide;
+            groupElement.classList.add(`drop-${dropSide}`);
+          });
+          groupElement.addEventListener("dragleave", (event) => {
+            if (event.relatedTarget && groupElement.contains(event.relatedTarget)) return;
+            groupElement.classList.remove("drop-before", "drop-after");
+            delete groupElement.dataset.dropSide;
+          });
+          groupElement.addEventListener("drop", (event) => {
+            event.preventDefault();
+            if (draggedGroupIndex === null) return;
+            const bounds = groupElement.getBoundingClientRect();
+            const dropSide = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
+            let destinationIndex = groupIndex + (dropSide === "after" ? 1 : 0);
+            if (draggedGroupIndex < destinationIndex) destinationIndex -= 1;
+            clearDropIndicators();
+            reorderEditingGroup(sectionKey, draggedGroupIndex, destinationIndex);
+            draggedGroupIndex = null;
+          });
+        }
+
         const positionTitle = document.createElement("h3");
         positionTitle.className = "position-title";
         positionTitle.dataset.section = sectionKey;
@@ -618,6 +711,7 @@ function renderProfile() {
         const positionLabel = document.createElement("span");
         const itemName = sectionKey === "education" ? "Education" : "Position";
         positionLabel.textContent = `${itemName} ${groupIndex + 1}`;
+        if (isEditing) positionTitle.append(createDragHandle(sectionKey, groupIndex, itemName));
         positionTitle.append(positionLabel);
 
         if (isEditing && groupedEntries.length > 1) {
@@ -632,29 +726,30 @@ function renderProfile() {
           positionTitle.append(removeButton);
         }
 
-        sectionElement.append(positionTitle);
+        groupElement.append(positionTitle);
       }
 
       group.fields.forEach((field, fieldIndex) => {
         if (isEditing && sectionKey === "personal" && field.label === "Name") {
-          appendNameEditField(sectionElement, sectionKey, field, fieldIndex);
+          appendNameEditField(groupElement, sectionKey, field, fieldIndex);
         } else if (isEditing && sectionKey === "education" && field.label === "Date") {
-          appendDateEditField(sectionElement, sectionKey, field, fieldIndex, groupIndex);
+          appendDateEditField(groupElement, sectionKey, field, fieldIndex, groupIndex);
         } else if (isEditing && sectionKey === "experience" && field.label === "Date") {
-          appendExperienceDateEditField(sectionElement, field, fieldIndex, groupIndex);
+          appendExperienceDateEditField(groupElement, field, fieldIndex, groupIndex);
         } else if (isEditing) {
-          appendEditField(sectionElement, sectionKey, section, field, fieldIndex, groupIndex);
+          appendEditField(groupElement, sectionKey, section, field, fieldIndex, groupIndex);
         } else if (sectionKey === "personal" && field.label === "Name") {
-          appendNameField(sectionElement, field);
+          appendNameField(groupElement, field);
         } else if (["education", "experience"].includes(sectionKey) && field.label === "Date") {
-          appendDateField(sectionElement, field);
+          appendDateField(groupElement, field);
         } else {
           const fullAddress = sectionKey === "personal" && field.label === "Location"
             ? formatFullAddress(section)
             : null;
-          appendCopyField(sectionElement, field, fullAddress || null);
+          appendCopyField(groupElement, field, fullAddress || null);
         }
       });
+      if (groupedEntries) sectionElement.append(groupElement);
     });
 
     profileElement.append(sectionElement);
@@ -837,21 +932,6 @@ function removeLink(fieldIndex) {
   inputs[Math.min(fieldIndex - 1, inputs.length - 1)]?.focus();
 }
 
-function endDateValue(position) {
-  const dateRange = position.fields.find((field) => field.label === "Date")?.value || "";
-  const endDate = dateRange.split(/\s+-\s+/)[1]?.trim();
-  if (!endDate) return Number.NEGATIVE_INFINITY;
-  if (["present", "current", "now"].includes(endDate.toLowerCase())) return Number.POSITIVE_INFINITY;
-
-  const parsedDate = Date.parse(endDate);
-  return Number.isNaN(parsedDate) ? Number.NEGATIVE_INFINITY : parsedDate;
-}
-
-function sortExperiencePositions(profile) {
-  profile.experience.positions.sort((first, second) => endDateValue(second) - endDateValue(first));
-  return profile;
-}
-
 function normalizeLinkValue(value) {
   const trimmedValue = value.trim();
   if (!trimmedValue || /^https?:\/\//i.test(trimmedValue)) return trimmedValue;
@@ -952,12 +1032,12 @@ function mergeWithDefaults(savedProfile) {
     }
   });
 
-  return normalizeLinks(sortExperiencePositions(mergedProfile));
+  return normalizeLinks(mergedProfile);
 }
 
 async function saveSection() {
   if (!educationFieldsAreComplete() || !dateInputsAreValid() || !experienceDateInputsAreValid()) return;
-  const updatedProfile = normalizeLinks(sortExperiencePositions(readEditorValues()));
+  const updatedProfile = normalizeLinks(readEditorValues());
 
   try {
     await browser.storage.local.set({ [STORAGE_KEY]: updatedProfile });
@@ -981,7 +1061,7 @@ async function initialize() {
       currentProfile = mergeWithDefaults(saved[STORAGE_KEY]);
       await browser.storage.local.set({ [STORAGE_KEY]: currentProfile });
     } else {
-      currentProfile = sortExperiencePositions(JSON.parse(JSON.stringify(EMPTY_PROFILE)));
+      currentProfile = JSON.parse(JSON.stringify(EMPTY_PROFILE));
       await browser.storage.local.set({ [STORAGE_KEY]: currentProfile });
     }
   } catch (error) {

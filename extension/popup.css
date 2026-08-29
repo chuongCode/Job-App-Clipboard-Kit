@@ -102,6 +102,7 @@ h1 {
 .label-copy-target:focus-visible,
 .copy-button:focus-visible,
 .remove-link-button:focus-visible,
+.drag-handle:focus-visible,
 .secondary-button:focus-visible,
 .primary-button:focus-visible,
 .profile-input:focus-visible,
@@ -259,9 +260,72 @@ h1 {
   font-weight: 600;
 }
 
-.position-title:not(:first-of-type) {
+.profile-group + .profile-group .position-title {
   padding-top: 8px;
   border-top: 1px solid #f0f1f3;
+}
+
+.profile-group {
+  position: relative;
+  border-radius: 6px;
+  transition: opacity 100ms ease;
+}
+
+.profile-group.is-dragging {
+  opacity: .45;
+}
+
+.profile-group.drop-before::before,
+.profile-group.drop-after::after {
+  position: absolute;
+  z-index: 1;
+  right: 6px;
+  left: 6px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--interaction-blue);
+  content: "";
+  pointer-events: none;
+}
+
+.profile-group.drop-before::before {
+  top: 0;
+}
+
+.profile-group.drop-after::after {
+  bottom: 0;
+}
+
+.drag-handle {
+  display: grid;
+  width: 18px;
+  height: 22px;
+  flex: 0 0 18px;
+  margin-left: -4px;
+  padding: 3px;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  color: #94a3b8;
+  background: transparent;
+  cursor: grab;
+}
+
+.drag-handle:hover {
+  color: #475569;
+  background: #eef2f7;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle-dots {
+  width: 10px;
+  height: 14px;
+  background-image: radial-gradient(circle, currentColor 1.25px, transparent 1.5px);
+  background-position: 0 0;
+  background-size: 5px 5px;
 }
 
 .profile-row {
@@ -688,7 +752,9 @@ h1 {
 .dark-mode .settings-dialog::backdrop { background: rgb(2 6 23 / 55%); }
 .dark-mode .toggle-track { background: #475569; }
 .dark-mode .position-title { color: #cbd5e1; }
-.dark-mode .position-title:not(:first-of-type) { border-color: #273449; }
+.dark-mode .profile-group + .profile-group .position-title { border-color: #273449; }
+.dark-mode .drag-handle { color: #64748b; }
+.dark-mode .drag-handle:hover { color: #cbd5e1; background: #273449; }
 .dark-mode .date-separator { color: #64748b; }
 
 .dark-mode .profile-input,
