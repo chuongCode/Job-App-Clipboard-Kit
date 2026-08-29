@@ -709,6 +709,7 @@ function renderProfile() {
         positionTitle.dataset.section = sectionKey;
 
         const positionLabel = document.createElement("span");
+        positionLabel.className = "position-label";
         const itemName = sectionKey === "education" ? "Education" : "Position";
         positionLabel.textContent = `${itemName} ${groupIndex + 1}`;
         if (isEditing) positionTitle.append(createDragHandle(sectionKey, groupIndex, itemName));

@@ -4,6 +4,8 @@
   --interaction-blue-dark: #1e40af;
   --interaction-blue-soft: #eff6ff;
   --interaction-blue-flash: #dbeafe;
+  --experience-divider: #2563eb;
+  --education-divider: #dc2626;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #1f2937;
   background: #fff;
@@ -254,10 +256,19 @@ h1 {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin: 8px 6px 2px;
+  margin: 8px 6px 5px;
+  padding-bottom: 4px;
   color: #374151;
   font-size: 11px;
   font-weight: 600;
+}
+
+.position-title[data-section="experience"] .position-label {
+  border-bottom: 2px solid var(--experience-divider);
+}
+
+.position-title[data-section="education"] .position-label {
+  border-bottom: 2px solid var(--education-divider);
 }
 
 .profile-group + .profile-group .position-title {
