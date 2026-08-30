@@ -36,6 +36,8 @@ After changing a source file, return to `about:debugging` → **This Firefox**, 
 
 For everyday changes, click the pencil beside a section heading, update that section's fields, and click **Save**. Pressing Enter also saves the active section; use Shift+Enter to insert a newline.
 
+Personal Location is edited as separate City and State fields and displayed as `City, State`. Click City to copy it by itself, click the rest of the Location row to copy `City, State`, or click the Location label to copy the combined `[Address], [City], [State] [ZIP]` value.
+
 While editing Experience or Education, drag the six-dot handle beside an entry heading to rearrange the entries. The saved profile keeps that order.
 
 New installations start with an empty profile. Existing saved values are preserved, while newly added fields are merged into the saved profile the next time the panel opens. To start over, clear the extension's local storage.

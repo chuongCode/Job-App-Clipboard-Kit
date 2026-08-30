@@ -7,7 +7,8 @@ const EMPTY_PROFILE = {
     fields: [
       { label: "Name", value: "" },
       { label: "Address", value: "" },
-      { label: "Location", value: "" },
+      { label: "City", value: "" },
+      { label: "State", value: "" },
       { label: "ZIP", value: "" },
       { label: "Email", value: "" },
       { label: "Phone", value: "" }
@@ -306,7 +307,8 @@ function createDragHandle(sectionKey, groupIndex, itemName) {
 
 function formatFullAddress(section) {
   const valueFor = (label) => section.fields.find((field) => field.label === label)?.value.trim() || "";
-  const addressAndLocation = [valueFor("Address"), valueFor("Location")].filter(Boolean).join(", ");
+  const cityAndState = [valueFor("City"), valueFor("State")].filter(Boolean).join(", ");
+  const addressAndLocation = [valueFor("Address"), cityAndState].filter(Boolean).join(", ");
   return [addressAndLocation, valueFor("ZIP")].filter(Boolean).join(" ");
 }
 
@@ -397,6 +399,50 @@ function appendNameField(sectionElement, field) {
   });
 
   row.append(label, nameParts);
+  sectionElement.append(row);
+}
+
+function appendLocationField(sectionElement, section) {
+  const valueFor = (label) => section.fields.find((field) => field.label === label)?.value.trim() || "";
+  const city = valueFor("City");
+  const state = valueFor("State");
+  const fullLocation = [city, state].filter(Boolean).join(", ");
+  const row = document.createElement("div");
+  row.className = "profile-row";
+  const label = createRowLabel("Location", formatFullAddress(section) || null, "Copy full address");
+
+  if (!fullLocation) {
+    const emptyValue = document.createElement("span");
+    emptyValue.className = "empty-value";
+    row.append(label, emptyValue);
+    sectionElement.append(row);
+    return;
+  }
+
+  const locationParts = document.createElement("div");
+  locationParts.className = "location-parts";
+
+  if (city) {
+    const cityButton = document.createElement("button");
+    cityButton.className = "date-part location-city";
+    cityButton.type = "button";
+    cityButton.textContent = state ? `${city},` : city;
+    cityButton.title = `Copy ${city}`;
+    cityButton.setAttribute("aria-label", `Copy ${city}`);
+    cityButton.addEventListener("click", () => copyValue(city, cityButton));
+    locationParts.append(cityButton);
+  }
+
+  const locationButton = document.createElement("button");
+  locationButton.className = "date-part location-full";
+  locationButton.type = "button";
+  locationButton.textContent = state;
+  locationButton.title = `Copy ${fullLocation}`;
+  locationButton.setAttribute("aria-label", `Copy ${fullLocation}`);
+  locationButton.addEventListener("click", () => copyValue(fullLocation, locationButton));
+  locationParts.append(locationButton);
+
+  row.append(label, locationParts);
   sectionElement.append(row);
 }
 
@@ -667,6 +713,31 @@ function appendNameEditField(sectionElement, sectionKey, field, fieldIndex) {
   sectionElement.append(row);
 }
 
+function appendLocationEditField(sectionElement, sectionKey, section) {
+  const row = document.createElement("div");
+  row.className = "edit-row";
+  const label = document.createElement("span");
+  label.className = "row-label";
+  label.textContent = "Location";
+
+  const fields = document.createElement("div");
+  fields.className = "location-edit-fields";
+  fields.dataset.section = sectionKey;
+
+  ["City", "State"].forEach((fieldLabel) => {
+    const input = document.createElement("input");
+    input.className = "location-part-input";
+    input.type = "text";
+    input.placeholder = fieldLabel;
+    input.setAttribute("aria-label", fieldLabel);
+    input.value = section.fields.find((field) => field.label === fieldLabel)?.value || "";
+    fields.append(input);
+  });
+
+  row.append(label, fields);
+  sectionElement.append(row);
+}
+
 function renderProfile() {
   const previousScrollTop = profileElement.scrollTop;
   profileElement.replaceChildren();
@@ -744,6 +815,10 @@ function renderProfile() {
       group.fields.forEach((field, fieldIndex) => {
         if (isEditing && sectionKey === "personal" && field.label === "Name") {
           appendNameEditField(groupElement, sectionKey, field, fieldIndex);
+        } else if (isEditing && sectionKey === "personal" && field.label === "City") {
+          appendLocationEditField(groupElement, sectionKey, section);
+        } else if (isEditing && sectionKey === "personal" && field.label === "State") {
+          return;
         } else if (isEditing && sectionKey === "education" && field.label === "Date") {
           appendDateEditField(groupElement, sectionKey, field, fieldIndex, groupIndex);
         } else if (isEditing && sectionKey === "experience" && field.label === "Date") {
@@ -752,13 +827,14 @@ function renderProfile() {
           appendEditField(groupElement, sectionKey, section, field, fieldIndex, groupIndex);
         } else if (sectionKey === "personal" && field.label === "Name") {
           appendNameField(groupElement, field);
+        } else if (sectionKey === "personal" && field.label === "City") {
+          appendLocationField(groupElement, section);
+        } else if (sectionKey === "personal" && field.label === "State") {
+          return;
         } else if (["education", "experience"].includes(sectionKey) && field.label === "Date") {
           appendDateField(groupElement, field);
         } else {
-          const fullAddress = sectionKey === "personal" && field.label === "Location"
-            ? formatFullAddress(section)
-            : null;
-          appendCopyField(groupElement, field, fullAddress || null);
+          appendCopyField(groupElement, field);
         }
       });
       if (groupedEntries) sectionElement.append(groupElement);
@@ -832,6 +908,13 @@ function readEditorValues() {
     const field = section.fields[Number(nameInputs.dataset.fieldIndex)];
     const parts = nameInputs.querySelectorAll(".name-part-input");
     field.value = [parts[0].value.trim(), parts[1].value.trim()].filter(Boolean).join(" ");
+  });
+
+  profileElement.querySelectorAll(".location-edit-fields").forEach((locationInputs) => {
+    const section = updatedProfile[locationInputs.dataset.section];
+    const parts = locationInputs.querySelectorAll(".location-part-input");
+    section.fields.find((field) => field.label === "City").value = parts[0].value.trim();
+    section.fields.find((field) => field.label === "State").value = parts[1].value.trim();
   });
 
   return updatedProfile;
@@ -1031,8 +1114,22 @@ function mergeWithDefaults(savedProfile) {
       return;
     }
 
-    const savedFields = savedProfile?.[sectionKey]?.fields;
+    let savedFields = savedProfile?.[sectionKey]?.fields;
     if (!Array.isArray(savedFields)) return;
+
+    if (sectionKey === "personal") {
+      const legacyLocation = savedFields.find((field) => field.label === "Location")?.value;
+      const hasSplitLocation = savedFields.some((field) => ["City", "State"].includes(field.label));
+      if (typeof legacyLocation === "string" && !hasSplitLocation) {
+        const locationParts = legacyLocation.split(",");
+        const state = locationParts.length > 1 ? locationParts.pop().trim() : "";
+        const city = locationParts.join(",").trim() || legacyLocation.trim();
+        savedFields = savedFields.concat([
+          { label: "City", value: city },
+          { label: "State", value: state }
+        ]);
+      }
+    }
 
     section.fields.forEach((field) => {
       const savedField = savedFields.find((candidate) => candidate.label === field.label);

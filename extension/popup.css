@@ -108,6 +108,7 @@ h1 {
 .secondary-button:focus-visible,
 .primary-button:focus-visible,
 .profile-input:focus-visible,
+.location-part-input:focus-visible,
 .date-year-input:focus-visible,
 .date-month-input:focus-visible,
 .experience-date-year-input:focus-visible {
@@ -418,15 +419,56 @@ h1 {
   height: 30px;
   flex: 1;
   align-items: center;
-  gap: 2px;
-  padding: 2px;
+  gap: 0;
+  padding: 2px 2px 2px 6px;
 }
 
-.name-part {
+.location-parts {
+  display: flex;
   min-width: 0;
+  height: 30px;
+  flex: 1;
+  align-items: center;
+  gap: 0;
+  padding: 2px 2px 2px 6px;
+}
+
+.date-part.location-city {
+  max-width: 58%;
+  flex: 0 1 auto;
+  padding-right: 0;
+  padding-left: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.date-part.location-full {
+  min-width: 0;
+  height: 26px;
+  flex: 1;
+  padding-left: .25em;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date-part.location-full:first-child {
+  padding-left: 0;
+}
+
+.date-part.name-part {
+  min-width: 0;
+  padding-right: 0;
+  padding-left: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name-part + .name-part {
+  margin-left: .25em;
 }
 
 .date-part {
@@ -442,6 +484,23 @@ h1 {
 .date-part:hover {
   color: var(--interaction-blue);
   background: var(--interaction-blue-soft);
+}
+
+.location-parts:has(.location-full:hover),
+.location-parts:has(.location-full:focus-visible),
+.location-parts:has(.location-full:active),
+.location-parts:has(.location-full.copied) {
+  color: var(--interaction-blue);
+  background: var(--interaction-blue-soft);
+  border-radius: 5px;
+}
+
+.location-parts:has(.location-full:hover) .date-part,
+.location-parts:has(.location-full:focus-visible) .date-part,
+.location-parts:has(.location-full:active) .date-part,
+.location-parts:has(.location-full.copied) .date-part {
+  color: inherit;
+  background: transparent;
 }
 
 .date-part:active,
@@ -511,6 +570,24 @@ h1 {
   line-height: 1.35;
   overflow-y: auto;
   resize: none;
+}
+
+.location-edit-fields {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 5px;
+}
+
+.location-part-input {
+  width: 100%;
+  height: 30px;
+  min-width: 0;
+  padding: 4px 7px;
+  border: 1px solid #d1d5db;
+  border-radius: 5px;
+  color: inherit;
+  background: #fff;
 }
 
 .removable-label {
@@ -615,6 +692,12 @@ h1 {
 }
 
 .name-part-input:focus-visible {
+  border-color: #2563eb;
+  outline: 2px solid #bfdbfe;
+  outline-offset: 0;
+}
+
+.location-part-input:focus-visible {
   border-color: #2563eb;
   outline: 2px solid #bfdbfe;
   outline-offset: 0;
@@ -772,6 +855,7 @@ h1 {
 .dark-mode .date-month-input,
 .dark-mode .experience-date-year-input,
 .dark-mode .name-part-input,
+.dark-mode .location-part-input,
 .dark-mode .date-year-input,
 .dark-mode .secondary-button {
   border-color: #475569;
