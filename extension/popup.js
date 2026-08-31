@@ -312,18 +312,38 @@ function formatFullAddress(section) {
   return [addressAndLocation, valueFor("ZIP")].filter(Boolean).join(" ");
 }
 
+function appendLabelContent(element, text) {
+  const iconPaths = {
+    LinkedIn: "M19 3A2 2 0 0 1 21 5v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14ZM8.34 18v-7.5H5.85V18h2.49ZM7.1 9.48a1.44 1.44 0 1 0 0-2.88 1.44 1.44 0 0 0 0 2.88ZM18.15 18v-4.1c0-2.2-1.17-3.22-2.74-3.22a2.36 2.36 0 0 0-2.14 1.18v-1.36h-2.49V18h2.49v-3.72c0-.98.18-1.93 1.4-1.93 1.2 0 1.22 1.12 1.22 2V18h2.26Z",
+    GitHub: "M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.87c-2.78.6-3.37-1.18-3.37-1.18-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.64-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.58 9.58 0 0 1 12 6.82c.85 0 1.71.11 2.51.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.77c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"
+  };
+  const pathData = iconPaths[text];
+  if (pathData) {
+    element.classList.add("brand-label");
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add("brand-icon", `brand-icon-${text.toLowerCase()}`);
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", pathData);
+    svg.append(path);
+    element.append(svg);
+  }
+  element.append(document.createTextNode(text));
+}
+
 function createRowLabel(text, valueToCopy = null, copyTitle = "") {
   const label = document.createElement("span");
   label.className = "row-label";
 
   if (valueToCopy === null) {
-    label.textContent = text;
+    appendLabelContent(label, text);
     return label;
   }
 
   const target = document.createElement("span");
   target.className = "label-copy-target";
-  target.textContent = text;
+  appendLabelContent(target, text);
   target.tabIndex = 0;
   target.setAttribute("role", "button");
   target.title = copyTitle;
@@ -490,7 +510,7 @@ function appendEditField(sectionElement, sectionKey, section, field, fieldIndex,
 
   const label = document.createElement("label");
   label.className = "row-label";
-  label.textContent = field.label;
+  appendLabelContent(label, field.label);
 
   const input = document.createElement("textarea");
   input.className = "profile-input";

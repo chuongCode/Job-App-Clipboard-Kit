@@ -537,13 +537,37 @@ h1 {
 }
 
 .row-label {
+  display: flex;
   flex: 0 0 78px;
+  align-items: center;
+  gap: 4px;
   color: #5b6472;
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: -.015em;
   line-height: 1.25;
+}
+
+.brand-icon {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  fill: currentColor;
+}
+
+.brand-icon-linkedin {
+  color: #0a66c2;
+}
+
+.brand-icon-github {
+  color: #24292f;
+}
+
+.label-copy-target.brand-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .row-value {
@@ -831,6 +855,9 @@ h1 {
 .dark-mode .row-label {
   color: #cbd5e1;
 }
+
+.dark-mode .brand-icon-linkedin { color: #70b5f9; }
+.dark-mode .brand-icon-github { color: #f0f6fc; }
 
 .dark-mode .settings-button,
 .dark-mode .dialog-close-button,
