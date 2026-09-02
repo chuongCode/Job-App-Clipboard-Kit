@@ -2,6 +2,8 @@
 *.xpi
 !distribution/releases/*.xpi
 web-ext-artifacts/
+.vercel-static/
+.vercel/
 
 # Local agent skills
 skills/
