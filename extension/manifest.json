@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Job App Clipboard Kit",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Quickly copy frequently used job application information.",
   "browser_specific_settings": {
     "gecko": {
       "id": "job-app-clipboard-kit@extensions.local",
-      "update_url": "https://chuongcode.github.io/Job-App-Clipboard-Kit/updates.json",
+      "update_url": "https://job-app-clipboard-kit.vercel.app/updates.json",
       "strict_min_version": "140.0",
       "data_collection_permissions": {
         "required": [
