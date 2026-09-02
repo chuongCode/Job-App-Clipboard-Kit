@@ -25,8 +25,6 @@ Job-App-Clipboard-Kit/
 ├── distribution/                 # Never include in the extension package
 │   ├── updates.json
 │   └── releases/                 # Mozilla-signed XPI files
-├── .github/workflows/
-│   └── deploy-distribution-pages.yml # Temporary fallback during Vercel migration
 ├── tools/
 │   └── build-vercel-site.sh          # Assembles Vercel's static output
 ├── vercel.json                       # Vercel build and cache policy
@@ -56,31 +54,18 @@ python3 -m http.server 8000 --directory .vercel-static
 
 Vercel is the target host. `vercel.json` runs `tools/build-vercel-site.sh`, which assembles `website/` and `distribution/` into `.vercel-static/`. The deployed landing page is at `/`, the Firefox update manifest is at `/updates.json`, and Mozilla-signed releases are under `/releases/`. Vercel must use the repository root as its Root Directory and the production deployment must be public over HTTPS.
 
-The production endpoints will be:
+The production endpoints are:
 
 ```text
 https://job-app-clipboard-kit.vercel.app/updates.json
 https://job-app-clipboard-kit.vercel.app/releases/job-app-clipboard-kit-<version>.xpi
 ```
 
-### Initial Vercel setup
+### Vercel configuration
 
-1. Import the GitHub repository into Vercel and keep the project Root Directory at the repository root.
-2. Use the **Other** framework preset. The committed `vercel.json` supplies the build command and output directory; do not override them in the dashboard.
-3. Deploy `main`, choose or attach the permanent production domain, and keep deployment protection off for production so Firefox can fetch updates without authentication.
-4. Verify `/`, `/updates.json`, and the current signed XPI under `/releases/`. Confirm that `/updates.json` revalidates rather than being cached long-term and that versioned XPIs may be cached immutably.
-5. Keep the GitHub Pages workflow and old Pages deployment live until the update-channel cutover below is complete. Preview Vercel deployments must never be placed in `update_url` or `update_link` because their hostnames are not the permanent production endpoint.
+The Vercel project uses the GitHub repository root as its Root Directory and the **Other** framework preset. The committed `vercel.json` supplies the build command and output directory; do not override them in the dashboard. Production deployments come from `main` and must remain public, with deployment protection off, so Firefox can fetch updates without authentication. Preview deployment hostnames must never be placed in `update_url` or `update_link` because they are not the permanent production endpoint.
 
-### Update-channel cutover
-
-The site links are relative, but Firefox's `update_url` and `update_link` are absolute. Moving those URLs is an extension release, not only a DNS or hosting change. Do not edit the currently published signed XPI.
-
-1. After the permanent Vercel domain is live, create a new extension version and change `extension/manifest.json` `update_url` to `https://job-app-clipboard-kit.vercel.app/updates.json` without changing the stable extension ID.
-2. Change the public website URL in `README.md` to the permanent Vercel URL.
-3. Submit that extension version to Mozilla and obtain the Mozilla-signed XPI using the normal release workflow.
-4. Publish the signed XPI on both hosts. While installed clients still use the GitHub Pages feed, update the old feed to advertise this bridge release from a URL that is publicly available. The bridge release then directs upgraded clients to the Vercel feed through its embedded `update_url`.
-5. Verify the new install on Firefox, the Vercel update feed, and the Vercel XPI. Allow an overlap period before retiring GitHub Pages so existing installations have time to discover the bridge release.
-6. Disable and remove `.github/workflows/deploy-distribution-pages.yml` only after the overlap period and after confirming that supported installations have migrated to the Vercel update feed.
+After each production deployment, verify `/`, `/updates.json`, and the current signed XPI under `/releases/`. Confirm that `/updates.json` revalidates rather than being cached long-term and that versioned XPIs may be cached immutably.
 
 The GitHub source link in `website/index.html` remains valid as long as the repository location does not change.
 
@@ -90,7 +75,7 @@ In Personal, First and Last are edited and copied separately, while clicking the
 
 ## Firefox release workflow
 
-The stable Firefox extension ID is `job-app-clipboard-kit@extensions.local`. Never change it between releases. During the Vercel migration, the currently signed build continues using `https://chuongcode.github.io/Job-App-Clipboard-Kit/updates.json`; after the signed bridge release, new builds use `https://job-app-clipboard-kit.vercel.app/updates.json`.
+The stable Firefox extension ID is `job-app-clipboard-kit@extensions.local`. Never change it between releases. The self-hosted update feed is published at `https://job-app-clipboard-kit.vercel.app/updates.json`.
 
 For every release:
 
@@ -102,7 +87,7 @@ For every release:
 6. Submit the ZIP to the existing Mozilla Developer Hub add-on as self-distributed/unlisted. Mozilla signing is a manual user step. Do not publish an unsigned locally built XPI; standard Firefox installations require Mozilla's signature.
 7. When the user supplies the Mozilla-signed XPI, verify its embedded manifest version, extension ID, `update_url`, extension source contents, and `META-INF` signature files. Rename it to `job-app-clipboard-kit-<version>.xpi` and move it into `distribution/releases/`. Keep older signed XPIs for rollback or audit.
 8. Update every versioned release reference in `website/index.html`, including the install link, signed-XPI inspection link, and displayed footer version.
-9. Only after the signed XPI is in `distribution/releases/`, update `distribution/updates.json` to advertise that exact version and its final production URL `https://job-app-clipboard-kit.vercel.app/releases/job-app-clipboard-kit-<version>.xpi`. During the bridge release, follow the cutover procedure above so the old feed remains valid long enough to migrate existing installations.
+9. Only after the signed XPI is in `distribution/releases/`, update `distribution/updates.json` to advertise that exact version and its final production URL `https://job-app-clipboard-kit.vercel.app/releases/job-app-clipboard-kit-<version>.xpi`.
 10. Before publishing, verify that the source manifest version, signed XPI manifest version, update-feed version, website version and links, stable extension ID, XPI filename, and XPI URL all agree. Validate JSON, inspect the XPI signature entries, compare the signed XPI's extension files with `extension/`, and record a SHA-256 checksum.
 11. Commit the signed XPI, update feed, and website references, then push them to `main`. Vercel automatically builds and deploys the combined static output.
 12. Wait for the Vercel production deployment for that commit to complete successfully. Then verify the live landing page shows the new version and links to the new XPI, the live `updates.json` advertises the new version, and the public XPI downloads successfully. Compare the downloaded XPI's SHA-256 checksum and embedded manifest with the committed signed XPI.
