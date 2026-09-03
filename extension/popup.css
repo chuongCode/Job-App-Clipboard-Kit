@@ -84,6 +84,7 @@ textarea {
   flex: 1;
   overflow-y: auto;
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
 }
 
 h1 {
@@ -598,6 +599,7 @@ h1 {
   line-height: 1.35;
   overflow-y: auto;
   resize: none;
+  scrollbar-width: thin;
 }
 
 .location-edit-fields {

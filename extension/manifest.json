@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Job App Clipboard Kit",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Quickly copy frequently used job application information.",
   "browser_specific_settings": {
     "gecko": {
