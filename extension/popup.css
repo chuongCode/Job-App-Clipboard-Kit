@@ -37,7 +37,10 @@ body {
   height: 100vh;
   max-width: none;
   max-height: none;
+  background: #111827;
 }
+
+.resume-preview-mode { background: #111827; }
 
 .resume-preview-mode .app-header,
 .resume-preview-mode #profile,
@@ -52,7 +55,7 @@ body {
   height: 100%;
   overflow: hidden;
   place-items: center;
-  background: #fff;
+  background: #111827;
 }
 
 .resume-preview-view[hidden] { display: none; }
@@ -61,7 +64,25 @@ body {
   display: contents;
 }
 
-#resume-preview-canvas {
+.resume-preview-view.has-multiple-pages {
+  display: block;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-color: #94a3b8 transparent;
+  scrollbar-width: thin;
+  background: #111827;
+}
+
+.resume-preview-view.has-multiple-pages .resume-preview-body {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+}
+
+.resume-preview-canvas {
   display: block;
   width: 100%;
   height: 100%;
@@ -71,7 +92,9 @@ body {
 .resume-preview-page {
   position: relative;
   overflow: hidden;
+  border-radius: 9px;
   background: #fff;
+  box-shadow: 0 16px 42px rgb(2 6 23 / 28%);
 }
 
 .resume-preview-text {

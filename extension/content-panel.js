@@ -89,6 +89,12 @@
     prepareResumePreview();
     resumeOverlay.classList.add("is-open");
     document.addEventListener("keydown", handleResumePreviewKeydown, true);
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+      resumeOverlay?.querySelector("iframe")?.contentWindow?.postMessage({
+        source: "job-app-clipboard-kit",
+        action: "reset-resume-preview"
+      }, "*");
+    }));
   };
 
   const handleWindowMessage = (event) => {
@@ -96,6 +102,14 @@
       && event.data?.source === "job-app-clipboard-kit"
       && event.data.action === "open-resume-preview") {
       openResumePreview();
+    }
+
+    if (resumeOverlay
+      && event.source === resumeOverlay.querySelector("iframe")?.contentWindow
+      && event.data?.source === "job-app-clipboard-kit"
+      && event.data.action === "resume-preview-layout") {
+      resumeOverlay.querySelector(".job-app-clipboard-kit-resume-modal")
+        ?.classList.toggle("has-multiple-pages", event.data.multiplePages === true);
     }
 
     if (resumeOverlay

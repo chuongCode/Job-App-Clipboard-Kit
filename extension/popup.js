@@ -69,6 +69,7 @@ const resumeUploadTitle = document.querySelector("#resume-upload-title");
 const resumeUploadDetail = document.querySelector("#resume-upload-detail");
 const resumePreviewButton = document.querySelector("#resume-preview-button");
 const resumePreviewView = document.querySelector("#resume-preview-view");
+const resumePreviewBody = document.querySelector("#resume-preview-body");
 const resumePreviewPage = document.querySelector("#resume-preview-page");
 const resumePreviewCanvas = document.querySelector("#resume-preview-canvas");
 const resumePreviewText = document.querySelector("#resume-preview-text");
@@ -80,6 +81,7 @@ const PROFILE_FILE_VERSION = 1;
 const RESUME_DATABASE_NAME = "job-app-clipboard-kit-files";
 const RESUME_STORE_NAME = "files";
 const RESUME_RECORD_KEY = "resume";
+const RESUME_PREVIEW_VERSION = 3;
 const MAX_RESUME_SIZE = 25 * 1024 * 1024;
 let currentProfile;
 let editingProfile;
@@ -89,9 +91,9 @@ let announcementTimer;
 const copyTimers = new WeakMap();
 let draggedGroupIndex = null;
 let currentResume = null;
+let resumePdfDocument = null;
 let resumePdfPage = null;
 let resumePdfJs = null;
-let resumeRenderTask = null;
 let resumePreviewReadyAnnounced = false;
 
 document.addEventListener("keydown", handleEditorKeydown);
@@ -206,7 +208,7 @@ async function readResume() {
   });
 }
 
-async function saveResume(file, previewBlob = null, filename = file.name) {
+async function saveResume(file, previewBlob = null, filename = file.name, pageCount = null) {
   const database = await openResumeDatabase();
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(RESUME_STORE_NAME, "readwrite");
@@ -214,6 +216,8 @@ async function saveResume(file, previewBlob = null, filename = file.name) {
       name: filename,
       blob: file,
       previewBlob,
+      previewVersion: previewBlob ? RESUME_PREVIEW_VERSION : null,
+      pageCount,
       updatedAt: new Date().toISOString()
     }, RESUME_RECORD_KEY);
     transaction.addEventListener("complete", () => {
@@ -271,61 +275,112 @@ function openResumePreview() {
   window.parent.postMessage({ source: "job-app-clipboard-kit", action: "open-resume-preview" }, "*");
 }
 
-async function drawResumePage() {
-  if (!resumePdfPage) return;
-  if (resumeRenderTask) {
-    resumeRenderTask.cancel();
-    try {
-      await resumeRenderTask.promise;
-    } catch (error) {
-      if (error?.name !== "RenderingCancelledException") throw error;
-    }
-  }
-
-  const baseViewport = resumePdfPage.getViewport({ scale: 1 });
+function getResumePageScale(page, hasFollowingPage) {
+  const viewport = page.getViewport({ scale: 1 });
   const availableWidth = resumePreviewView.clientWidth;
-  const availableHeight = resumePreviewView.clientHeight;
-  const cssScale = Math.min(
-    availableWidth / baseViewport.width,
-    availableHeight / baseViewport.height
-  );
+  const availableHeight = resumePreviewView.clientHeight - (hasFollowingPage ? 32 : 0);
+  return Math.min(availableWidth / viewport.width, availableHeight / viewport.height);
+}
+
+function waitForPreviewLayout() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+  });
+}
+
+async function renderResumePage(
+  page,
+  pageElement,
+  canvas,
+  textElement,
+  hasFollowingPage,
+  announceReady = false
+) {
+  const cssScale = getResumePageScale(page, hasFollowingPage);
   const outputScale = Math.min(window.devicePixelRatio || 1, 1.5);
-  const cssViewport = resumePdfPage.getViewport({ scale: cssScale });
-  const viewport = resumePdfPage.getViewport({ scale: cssScale * outputScale });
+  const cssViewport = page.getViewport({ scale: cssScale });
+  const viewport = page.getViewport({ scale: cssScale * outputScale });
 
-  resumePreviewCanvas.width = Math.floor(viewport.width);
-  resumePreviewCanvas.height = Math.floor(viewport.height);
-  resumePreviewPage.style.width = `${Math.floor(cssViewport.width)}px`;
-  resumePreviewPage.style.height = `${Math.floor(cssViewport.height)}px`;
-  resumePreviewCanvas.style.width = "100%";
-  resumePreviewCanvas.style.height = "100%";
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+  pageElement.style.width = `${Math.floor(cssViewport.width)}px`;
+  pageElement.style.height = `${Math.floor(cssViewport.height)}px`;
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
 
-  const context = resumePreviewCanvas.getContext("2d", { alpha: false });
-  resumeRenderTask = resumePdfPage.render({ canvasContext: context, viewport });
-  await resumeRenderTask.promise;
-  resumeRenderTask = null;
+  const renderTask = page.render({
+    canvasContext: canvas.getContext("2d", { alpha: false }),
+    viewport,
+    background: "#ffffff"
+  });
+  await renderTask.promise;
 
-  if (!resumePreviewReadyAnnounced) {
+  if (announceReady && !resumePreviewReadyAnnounced) {
     resumePreviewReadyAnnounced = true;
     window.parent.postMessage({ source: "job-app-clipboard-kit", action: "resume-preview-ready" }, "*");
   }
 
-  resumePreviewText.replaceChildren();
-  resumePreviewText.style.setProperty("--total-scale-factor", cssViewport.scale);
-  resumePreviewText.style.setProperty("--scale-round-x", "1px");
-  resumePreviewText.style.setProperty("--scale-round-y", "1px");
+  textElement.replaceChildren();
+  textElement.style.setProperty("--total-scale-factor", cssViewport.scale);
+  textElement.style.setProperty("--scale-round-x", "1px");
+  textElement.style.setProperty("--scale-round-y", "1px");
   const textLayer = new resumePdfJs.TextLayer({
-    textContentSource: resumePdfPage.streamTextContent(),
-    container: resumePreviewText,
+    textContentSource: page.streamTextContent(),
+    container: textElement,
     viewport: cssViewport
   });
-  await textLayer.render();
+  return textLayer.render();
+}
+
+async function drawResumePages() {
+  if (!resumePdfPage) return;
+  resumePreviewBody.querySelectorAll(".resume-preview-page:not(#resume-preview-page)").forEach((page) => page.remove());
+  const hasMultiplePages = resumePdfDocument.numPages > 1;
+  resumePreviewView.classList.toggle("has-multiple-pages", hasMultiplePages);
+  await renderResumePage(
+    resumePdfPage,
+    resumePreviewPage,
+    resumePreviewCanvas,
+    resumePreviewText,
+    hasMultiplePages,
+    true
+  );
+
+  for (let pageNumber = 2; pageNumber <= resumePdfDocument.numPages; pageNumber += 1) {
+    const page = await resumePdfDocument.getPage(pageNumber);
+    const pageElement = document.createElement("div");
+    pageElement.className = "resume-preview-page";
+    const canvas = document.createElement("canvas");
+    canvas.className = "resume-preview-canvas";
+    canvas.setAttribute("role", "img");
+    canvas.setAttribute("aria-label", `Resume PDF page ${pageNumber}`);
+    const textElement = document.createElement("div");
+    textElement.className = "resume-preview-text";
+    textElement.setAttribute("aria-label", `Selectable resume text, page ${pageNumber}`);
+    pageElement.append(canvas, textElement);
+    resumePreviewBody.insertBefore(pageElement, resumePreviewError);
+    await renderResumePage(
+      page,
+      pageElement,
+      canvas,
+      textElement,
+      pageNumber < resumePdfDocument.numPages
+    );
+  }
 }
 
 async function drawCachedResumePreview(previewBlob) {
   const image = await createImageBitmap(previewBlob);
+  const hasMultiplePages = currentResume.pageCount > 1;
+  resumePreviewView.classList.toggle("has-multiple-pages", hasMultiplePages);
+  window.parent.postMessage({
+    source: "job-app-clipboard-kit",
+    action: "resume-preview-layout",
+    multiplePages: hasMultiplePages
+  }, "*");
+  await waitForPreviewLayout();
   const availableWidth = resumePreviewView.clientWidth;
-  const availableHeight = resumePreviewView.clientHeight;
+  const availableHeight = resumePreviewView.clientHeight - (currentResume.pageCount > 1 ? 32 : 0);
   const cssScale = Math.min(availableWidth / image.width, availableHeight / image.height);
   const cssWidth = Math.floor(image.width * cssScale);
   const cssHeight = Math.floor(image.height * cssScale);
@@ -360,7 +415,7 @@ async function renderPageResumePreview() {
     return;
   }
 
-  if (currentResume.previewBlob) {
+  if (currentResume.previewBlob && currentResume.previewVersion === RESUME_PREVIEW_VERSION) {
     await drawCachedResumePreview(currentResume.previewBlob);
   }
 
@@ -368,21 +423,51 @@ async function renderPageResumePreview() {
   resumePdfJs = pdfjs;
   pdfjs.GlobalWorkerOptions.workerSrc = browser.runtime.getURL("vendor/pdfjs/pdf.worker.min.mjs");
   const data = new Uint8Array(await currentResume.blob.arrayBuffer());
-  const pdf = await pdfjs.getDocument({ data }).promise;
-  resumePdfPage = await pdf.getPage(1);
-  await drawResumePage();
-  if (!currentResume.previewBlob) {
+  resumePdfDocument = await pdfjs.getDocument({ data }).promise;
+  resumePdfPage = await resumePdfDocument.getPage(1);
+  currentResume.pageCount = resumePdfDocument.numPages;
+  resumePreviewView.classList.toggle("has-multiple-pages", resumePdfDocument.numPages > 1);
+  window.parent.postMessage({
+    source: "job-app-clipboard-kit",
+    action: "resume-preview-layout",
+    multiplePages: resumePdfDocument.numPages > 1
+  }, "*");
+  await waitForPreviewLayout();
+  await drawResumePages();
+  if (!currentResume.previewBlob || currentResume.previewVersion !== RESUME_PREVIEW_VERSION) {
     const previewBlob = await new Promise((resolve) => resumePreviewCanvas.toBlob(resolve, "image/png"));
     if (previewBlob) {
       currentResume.previewBlob = previewBlob;
-      await saveResume(currentResume.blob, previewBlob, currentResume.name);
+      await saveResume(
+        currentResume.blob,
+        previewBlob,
+        currentResume.name,
+        resumePdfDocument.numPages
+      );
     }
   }
 }
 
 resumeFile.addEventListener("change", () => handleResumeFile(resumeFile.files[0]));
 resumePreviewButton.addEventListener("click", openResumePreview);
-window.addEventListener("resize", () => drawResumePage().catch(console.error));
+window.addEventListener("message", (event) => {
+  if (isResumePreview
+    && event.source === window.parent
+    && event.data?.source === "job-app-clipboard-kit"
+    && event.data.action === "reset-resume-preview") {
+    const resetScroll = () => {
+      resumePreviewView.scrollTop = 0;
+      resumePreviewView.scrollLeft = 0;
+      resumePreviewBody.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      document.scrollingElement.scrollTop = 0;
+      window.scrollTo(0, 0);
+    };
+    resetScroll();
+    window.requestAnimationFrame(resetScroll);
+  }
+});
 resumeUploadArea.addEventListener("dragover", (event) => {
   event.preventDefault();
   resumeUploadArea.classList.add("is-dragging");
