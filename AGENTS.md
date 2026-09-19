@@ -16,6 +16,8 @@ Job-App-Clipboard-Kit/
 │   ├── popup.html
 │   ├── popup.css
 │   ├── popup.js
+│   ├── vendor/
+│   │   └── pdfjs/               # Locally bundled Mozilla PDF.js runtime and license
 │   └── icons/
 ├── website/                     # Static landing page only
 │   ├── index.html

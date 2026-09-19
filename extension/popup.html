@@ -20,7 +20,38 @@
       </button>
     </header>
 
-    <main id="profile" aria-live="polite"></main>
+    <section id="resume-preview-view" class="resume-preview-view" aria-label="Resume preview" hidden>
+      <div class="resume-preview-body">
+        <div id="resume-preview-page" class="resume-preview-page">
+          <canvas id="resume-preview-canvas" role="img" aria-label="Resume PDF"></canvas>
+          <div id="resume-preview-text" class="resume-preview-text" aria-label="Selectable resume text"></div>
+        </div>
+        <p id="resume-preview-error" class="resume-preview-error" hidden>Could not load the resume preview.</p>
+      </div>
+    </section>
+
+    <main id="profile" aria-live="polite">
+      <div id="profile-sections"></div>
+      <section id="resume-section" class="section resume-section" aria-labelledby="resume-title">
+        <div class="section-heading resume-heading">
+          <h2 id="resume-title" class="section-title">Resume</h2>
+          <button id="resume-preview-button" class="secondary-button compact-button" type="button" hidden>Preview</button>
+        </div>
+        <label id="resume-upload-area" class="resume-upload-area" for="resume-file">
+          <span class="resume-upload-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M7 3h7l4 4v14H7V3Z"></path>
+              <path d="M14 3v5h5M9.5 14.5h5M12 12v5"></path>
+            </svg>
+          </span>
+          <span class="resume-upload-copy">
+            <strong id="resume-upload-title">Upload resume PDF</strong>
+            <span id="resume-upload-detail">Choose a PDF or drop it here</span>
+          </span>
+        </label>
+        <input id="resume-file" type="file" accept="application/pdf,.pdf" hidden>
+      </section>
+    </main>
 
     <div id="status" class="status" role="status" aria-live="polite"></div>
     <dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">

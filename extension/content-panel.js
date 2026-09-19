@@ -2,9 +2,12 @@
 
 (() => {
   const panelId = "job-app-clipboard-kit-panel";
+  const cleanupEventName = "job-app-clipboard-kit-cleanup";
   const existingPanel = document.getElementById(panelId);
 
   if (existingPanel) {
+    window.dispatchEvent(new Event(cleanupEventName));
+    document.getElementById("job-app-clipboard-kit-resume-overlay")?.remove();
     existingPanel.remove();
     return;
   }
@@ -33,6 +36,88 @@
   frame.title = "Job App Clipboard Kit";
   frame.allow = "clipboard-write";
 
+  let resumeOverlay = null;
+
+  const closeResumePreview = () => {
+    if (!resumeOverlay) return;
+    document.removeEventListener("keydown", handleResumePreviewKeydown, true);
+    resumeOverlay.classList.remove("is-open");
+  };
+
+  const destroyResumePreview = () => {
+    if (!resumeOverlay) return;
+    closeResumePreview();
+    resumeOverlay.remove();
+    resumeOverlay = null;
+  };
+
+  const handleResumePreviewKeydown = (event) => {
+    if (event.key === "Escape") closeResumePreview();
+  };
+
+  const prepareResumePreview = () => {
+    if (resumeOverlay) return;
+    resumeOverlay = document.createElement("div");
+    resumeOverlay.id = "job-app-clipboard-kit-resume-overlay";
+    resumeOverlay.setAttribute("role", "presentation");
+
+    const resumeModal = document.createElement("div");
+    resumeModal.className = "job-app-clipboard-kit-resume-modal";
+
+    const previewFrame = document.createElement("iframe");
+    previewFrame.className = "job-app-clipboard-kit-resume-frame";
+    previewFrame.src = `${browser.runtime.getURL("popup.html")}?view=resume`;
+    previewFrame.title = "Resume preview";
+
+    const previewClose = document.createElement("button");
+    previewClose.className = "job-app-clipboard-kit-resume-close";
+    previewClose.type = "button";
+    previewClose.textContent = "×";
+    previewClose.title = "Close resume preview";
+    previewClose.setAttribute("aria-label", "Close resume preview");
+    previewClose.addEventListener("click", closeResumePreview);
+
+    resumeOverlay.addEventListener("click", (event) => {
+      if (event.target === resumeOverlay) closeResumePreview();
+    });
+    resumeModal.append(previewFrame, previewClose);
+    resumeOverlay.append(resumeModal);
+    document.documentElement.append(resumeOverlay);
+  };
+
+  const openResumePreview = () => {
+    prepareResumePreview();
+    resumeOverlay.classList.add("is-open");
+    document.addEventListener("keydown", handleResumePreviewKeydown, true);
+  };
+
+  const handleWindowMessage = (event) => {
+    if (event.source === frame.contentWindow
+      && event.data?.source === "job-app-clipboard-kit"
+      && event.data.action === "open-resume-preview") {
+      openResumePreview();
+    }
+
+    if (resumeOverlay
+      && event.source === resumeOverlay.querySelector("iframe")?.contentWindow
+      && event.data?.source === "job-app-clipboard-kit"
+      && event.data.action === "resume-preview-ready") {
+      resumeOverlay.classList.add("is-ready");
+      if (resumeOverlay.classList.contains("is-open")) {
+        resumeOverlay.querySelector(".job-app-clipboard-kit-resume-close")?.focus({ preventScroll: true });
+      }
+    }
+
+    if (event.source === frame.contentWindow
+      && event.data?.source === "job-app-clipboard-kit"
+      && event.data.action === "resume-updated") {
+      destroyResumePreview();
+      prepareResumePreview();
+    }
+
+  };
+  window.addEventListener("message", handleWindowMessage);
+
   const closeButton = document.createElement("button");
   closeButton.className = "job-app-clipboard-kit-close";
   closeButton.type = "button";
@@ -40,8 +125,7 @@
   closeButton.title = "Close";
   closeButton.setAttribute("aria-label", "Close Job App Clipboard Kit");
   closeButton.addEventListener("click", () => {
-    window.removeEventListener("resize", keepPanelInViewport);
-    panel.remove();
+    cleanupPanel();
   });
 
   const dragRegion = document.createElement("div");
@@ -98,6 +182,17 @@
   };
   window.addEventListener("resize", keepPanelInViewport);
 
+  const cleanupPanel = () => {
+    window.removeEventListener("message", handleWindowMessage);
+    window.removeEventListener("resize", keepPanelInViewport);
+    window.removeEventListener(cleanupEventName, cleanupPanel);
+    browser.storage.onChanged.removeListener(handleSettingsChange);
+    destroyResumePreview();
+    panel.remove();
+  };
+  window.addEventListener(cleanupEventName, cleanupPanel, { once: true });
+
   panel.append(frame, dragRegion, closeButton);
   document.documentElement.append(panel);
+  prepareResumePreview();
 })();

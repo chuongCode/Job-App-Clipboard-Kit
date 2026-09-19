@@ -6,7 +6,9 @@ Visit the [Job App Clipboard Kit website](https://job-app-clipboard-kit.vercel.a
 
 Click the toolbar icon to toggle a floating profile panel in the current webpage, then click any value to copy only that value. The panel opens in the upper-right corner and remains open while you interact with the page. Drag the title area to move it. Use a section's pencil to update its values; **Save** stores them in Firefox's local extension storage so they remain available after the panel or browser closes.
 
-The extension has no backend, analytics, external requests, or third-party dependencies. Its small content script only creates and toggles the floating panel; it does not inspect forms or page data.
+The extension has no backend, analytics, or external requests. Its small content script only creates and toggles the floating panel; it does not inspect forms or page data. Mozilla PDF.js is bundled locally for resume previews, so viewing a resume never contacts a third-party service.
+
+You can also upload a resume PDF for a quick preview. The PDF stays in local browser storage and opens fitted to a centered, distraction-free modal over a dimmed page. PDF rendering happens locally with Mozilla PDF.js, and the file is never included in profile JSON exports.
 
 ## Load temporarily in Firefox
 
