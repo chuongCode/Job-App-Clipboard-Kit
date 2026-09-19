@@ -21,6 +21,24 @@
   background: #fff;
 }
 
+#job-app-clipboard-kit-panel .job-app-clipboard-kit-drag-region {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 82px;
+  left: 0;
+  height: 59px;
+  background: transparent;
+  cursor: default;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+#job-app-clipboard-kit-panel.is-dragging {
+  cursor: default;
+  user-select: none;
+}
+
 #job-app-clipboard-kit-panel .job-app-clipboard-kit-close {
   position: absolute;
   top: 14px;

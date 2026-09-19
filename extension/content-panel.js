@@ -39,8 +39,65 @@
   closeButton.textContent = "×";
   closeButton.title = "Close";
   closeButton.setAttribute("aria-label", "Close Job App Clipboard Kit");
-  closeButton.addEventListener("click", () => panel.remove());
+  closeButton.addEventListener("click", () => {
+    window.removeEventListener("resize", keepPanelInViewport);
+    panel.remove();
+  });
 
-  panel.append(frame, closeButton);
+  const dragRegion = document.createElement("div");
+  dragRegion.className = "job-app-clipboard-kit-drag-region";
+  dragRegion.setAttribute("aria-hidden", "true");
+
+  const clampPanelPosition = (left, top) => ({
+    left: Math.min(Math.max(0, left), Math.max(0, window.innerWidth - panel.offsetWidth)),
+    top: Math.min(Math.max(0, top), Math.max(0, window.innerHeight - panel.offsetHeight))
+  });
+
+  const setPanelPosition = (left, top) => {
+    const position = clampPanelPosition(left, top);
+    panel.style.right = "auto";
+    panel.style.left = `${position.left}px`;
+    panel.style.top = `${position.top}px`;
+  };
+
+  dragRegion.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+
+    const bounds = panel.getBoundingClientRect();
+    const pointerOffsetX = event.clientX - bounds.left;
+    const pointerOffsetY = event.clientY - bounds.top;
+
+    setPanelPosition(bounds.left, bounds.top);
+    dragRegion.setPointerCapture(event.pointerId);
+    panel.classList.add("is-dragging");
+    event.preventDefault();
+
+    const handlePointerMove = (moveEvent) => {
+      setPanelPosition(
+        moveEvent.clientX - pointerOffsetX,
+        moveEvent.clientY - pointerOffsetY
+      );
+    };
+
+    const finishDragging = () => {
+      panel.classList.remove("is-dragging");
+      dragRegion.removeEventListener("pointermove", handlePointerMove);
+      dragRegion.removeEventListener("pointerup", finishDragging);
+      dragRegion.removeEventListener("pointercancel", finishDragging);
+    };
+
+    dragRegion.addEventListener("pointermove", handlePointerMove);
+    dragRegion.addEventListener("pointerup", finishDragging);
+    dragRegion.addEventListener("pointercancel", finishDragging);
+  });
+
+  const keepPanelInViewport = () => {
+    if (!panel.style.left) return;
+    const bounds = panel.getBoundingClientRect();
+    setPanelPosition(bounds.left, bounds.top);
+  };
+  window.addEventListener("resize", keepPanelInViewport);
+
+  panel.append(frame, dragRegion, closeButton);
   document.documentElement.append(panel);
 })();

@@ -47,6 +47,11 @@ textarea {
   border-bottom: 1px solid #e5e7eb;
 }
 
+.app-header h1,
+.app-header p {
+  user-select: none;
+}
+
 .settings-button {
   position: fixed;
   z-index: 2;
