@@ -699,7 +699,7 @@ function appendNameEditField(sectionElement, sectionKey, field, fieldIndex) {
   row.className = "edit-row";
   const label = document.createElement("span");
   label.className = "row-label";
-  label.textContent = field.label;
+  label.textContent = "Full Name";
 
   const fields = document.createElement("div");
   fields.className = "name-edit-fields";
